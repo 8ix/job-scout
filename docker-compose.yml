@@ -1,0 +1,54 @@
+services:
+  job-scout:
+    build: .
+    container_name: job-scout
+    restart: unless-stopped
+    depends_on:
+      job-scout-db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://jobscout:jobscout@job-scout-db:5432/jobscout
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - job-scout-net
+    # Traefik labels — uncomment and adjust for your domain
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.job-scout.rule=Host(`jobs.yourdomain.com`)"
+    #   - "traefik.http.routers.job-scout.entrypoints=websecure"
+    #   - "traefik.http.routers.job-scout.tls.certresolver=letsencrypt"
+    #   - "traefik.http.services.job-scout.loadbalancer.server.port=3000"
+
+  job-scout-db:
+    image: postgres:17-alpine
+    container_name: job-scout-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jobscout
+      POSTGRES_PASSWORD: jobscout
+      POSTGRES_DB: jobscout
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobscout"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - job-scout-net
+
+volumes:
+  pgdata:
+
+networks:
+  job-scout-net:
+    driver: bridge

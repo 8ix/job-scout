@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Opportunity {
+  id           String    @id @default(uuid())
+  jobId        String
+  source       String
+  title        String
+  company      String
+  location     String?
+  workingModel String?
+  listingType  String?
+  salaryMin    Int?
+  salaryMax    Int?
+  score        Int
+  verdict      String
+  matchReasons String?
+  redFlags     String?
+  url          String
+  description  String?
+  status       String    @default("new")
+  appliedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  postedAt     DateTime?
+
+  @@unique([source, jobId])
+  @@index([createdAt(sort: Desc)])
+  @@index([score(sort: Desc)])
+  @@index([status])
+  @@map("opportunities")
+}
+
+model Rejection {
+  id        String   @id @default(uuid())
+  jobId     String
+  source    String
+  title     String
+  company   String?
+  url       String
+  score     Int
+  redFlags  String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([source])
+  @@map("rejections")
+}
+
+model SystemPrompt {
+  id                 String   @id @default(uuid())
+  name               String
+  systemPrompt       String
+  userPromptTemplate String
+  isActive           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  notes              String?
+
+  @@map("system_prompts")
+}
+
+model FeedHeartbeat {
+  id               String   @id @default(uuid())
+  source           String
+  jobsReceived     Int
+  jobsNew          Int
+  jobsScored       Int
+  jobsOpportunity  Int
+  ranAt            DateTime
+
+  @@index([ranAt(sort: Desc)])
+  @@map("feed_heartbeats")
+}
