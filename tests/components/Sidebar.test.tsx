@@ -16,22 +16,15 @@ describe("Sidebar", () => {
 
     expect(screen.getByTestId("nav-dashboard")).toBeInTheDocument();
     expect(screen.getByTestId("nav-opportunities")).toBeInTheDocument();
+    expect(screen.getByTestId("nav-applications")).toBeInTheDocument();
     expect(screen.getByTestId("nav-rejections")).toBeInTheDocument();
     expect(screen.getByTestId("nav-prompts")).toBeInTheDocument();
     expect(screen.getByTestId("nav-feeds")).toBeInTheDocument();
-    expect(screen.getByTestId("nav-cv")).toBeInTheDocument();
   });
 
   it("renders the Job Scout title", () => {
     render(<Sidebar />);
     expect(screen.getByText("Job Scout")).toBeInTheDocument();
-  });
-
-  it("shows CV link as disabled with 'Soon' label", () => {
-    render(<Sidebar />);
-    const cvItem = screen.getByTestId("nav-cv");
-    expect(cvItem).toHaveClass("cursor-not-allowed");
-    expect(screen.getByText("Soon")).toBeInTheDocument();
   });
 
   it("highlights the active route", () => {

@@ -1,8 +1,9 @@
+# Use pre-built image from GHCR (no local build).
+# On Raspberry Pi: docker compose -f docker-compose.ghcr.yml pull && docker compose -f docker-compose.ghcr.yml up -d
+
 services:
   job-scout-migrate:
-    build:
-      context: .
-      target: release
+    image: ghcr.io/8ix/job-scout:latest
     container_name: job-scout-migrate
     depends_on:
       job-scout-db:
@@ -14,9 +15,7 @@ services:
       - job-scout-net
 
   job-scout:
-    build:
-      context: .
-      target: release
+    image: ghcr.io/8ix/job-scout:latest
     container_name: job-scout
     restart: unless-stopped
     depends_on:
@@ -38,13 +37,6 @@ services:
       start_period: 10s
     networks:
       - job-scout-net
-    # Traefik labels — uncomment and adjust for your domain
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.job-scout.rule=Host(`jobs.yourdomain.com`)"
-    #   - "traefik.http.routers.job-scout.entrypoints=websecure"
-    #   - "traefik.http.routers.job-scout.tls.certresolver=letsencrypt"
-    #   - "traefik.http.services.job-scout.loadbalancer.server.port=3000"
 
   job-scout-db:
     image: postgres:17-alpine

@@ -11,7 +11,6 @@ const navItems = [
   { href: "/rejections", label: "Rejections", icon: "🚫" },
   { href: "/prompts", label: "Prompts", icon: "📝" },
   { href: "/feeds", label: "Feeds", icon: "📡" },
-  { href: "/cv", label: "CV", icon: "📄", disabled: true },
 ];
 
 export function Sidebar() {
@@ -26,32 +25,19 @@ export function Sidebar() {
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
           return (
-            <div key={item.href}>
-              {item.disabled ? (
-                <span
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground opacity-50 cursor-not-allowed"
-                  title="Coming soon"
-                  data-testid={`nav-${item.label.toLowerCase().replace(/\s/g, "-")}`}
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                  <span className="ml-auto text-xs bg-muted px-1.5 py-0.5 rounded">Soon</span>
-                </span>
-              ) : (
-                <Link
-                  href={item.href}
-                  data-testid={`nav-${item.label.toLowerCase().replace(/\s/g, "-")}`}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                </Link>
-              )}
-            </div>
+            <Link
+              key={item.href}
+              href={item.href}
+              data-testid={`nav-${item.label.toLowerCase().replace(/\s/g, "-")}`}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-muted"
+              }`}
+            >
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
           );
         })}
       </nav>

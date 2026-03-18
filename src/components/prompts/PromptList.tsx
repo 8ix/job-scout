@@ -20,10 +20,55 @@ interface PromptListProps {
 export function PromptList({ prompts }: PromptListProps) {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{
+    name: string;
+    systemPrompt: string;
+    userPromptTemplate: string;
+    notes: string;
+  } | null>(null);
+  const [saving, setSaving] = useState(false);
 
   async function handleActivate(id: string) {
     await fetch(`/api/prompts/${id}/activate`, { method: "PATCH" });
     router.refresh();
+  }
+
+  function startEdit(prompt: Prompt) {
+    setEditingId(prompt.id);
+    setEditForm({
+      name: prompt.name,
+      systemPrompt: prompt.systemPrompt,
+      userPromptTemplate: prompt.userPromptTemplate,
+      notes: prompt.notes ?? "",
+    });
+    setExpandedId(prompt.id);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditForm(null);
+  }
+
+  async function saveEdit(id: string) {
+    if (!editForm) return;
+    setSaving(true);
+    const res = await fetch(`/api/prompts/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: editForm.name,
+        systemPrompt: editForm.systemPrompt,
+        userPromptTemplate: editForm.userPromptTemplate,
+        notes: editForm.notes || null,
+      }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      setEditingId(null);
+      setEditForm(null);
+      router.refresh();
+    }
   }
 
   return (
@@ -49,6 +94,12 @@ export function PromptList({ prompts }: PromptListProps) {
                 </button>
               )}
               <button
+                onClick={() => startEdit(prompt)}
+                className="rounded-lg border border-border px-3 py-1.5 text-xs text-card-foreground hover:bg-muted transition-colors"
+              >
+                Edit
+              </button>
+              <button
                 onClick={() => setExpandedId(expandedId === prompt.id ? null : prompt.id)}
                 className="rounded-lg border border-border px-3 py-1.5 text-xs text-card-foreground hover:bg-muted transition-colors"
               >
@@ -64,18 +115,75 @@ export function PromptList({ prompts }: PromptListProps) {
 
           {expandedId === prompt.id && (
             <div className="space-y-2 pt-2 border-t border-border">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">System Prompt</p>
-                <pre className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap text-card-foreground">
-                  {prompt.systemPrompt}
-                </pre>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">User Prompt Template</p>
-                <pre className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap text-card-foreground">
-                  {prompt.userPromptTemplate}
-                </pre>
-              </div>
+              {editingId === prompt.id && editForm ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Name</label>
+                    <input
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">System Prompt</label>
+                    <textarea
+                      value={editForm.systemPrompt}
+                      onChange={(e) => setEditForm({ ...editForm, systemPrompt: e.target.value })}
+                      rows={6}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">User Prompt Template</label>
+                    <textarea
+                      value={editForm.userPromptTemplate}
+                      onChange={(e) => setEditForm({ ...editForm, userPromptTemplate: e.target.value })}
+                      rows={4}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Notes</label>
+                    <input
+                      value={editForm.notes}
+                      onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                      placeholder="Optional notes"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveEdit(prompt.id)}
+                      disabled={saving}
+                      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                    >
+                      {saving ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="rounded-lg border border-border px-4 py-2 text-sm text-card-foreground hover:bg-muted transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">System Prompt</p>
+                    <pre className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap text-card-foreground">
+                      {prompt.systemPrompt}
+                    </pre>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">User Prompt Template</p>
+                    <pre className="text-sm bg-muted p-3 rounded-lg whitespace-pre-wrap text-card-foreground">
+                      {prompt.userPromptTemplate}
+                    </pre>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

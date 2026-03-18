@@ -175,3 +175,81 @@ describe("PATCH /api/prompts/:id/activate", () => {
     expect(response.status).toBe(401);
   });
 });
+
+describe("PATCH /api/prompts/:id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetServerSession.mockResolvedValue({ user: { name: "admin" } });
+  });
+
+  it("updates a prompt including when active", async () => {
+    const existing = buildSystemPrompt({
+      id: "prompt-id",
+      name: "v1",
+      systemPrompt: "Old system",
+      userPromptTemplate: "Old template",
+      isActive: true,
+    });
+    const updated = buildSystemPrompt({
+      ...existing,
+      name: "v1 updated",
+      systemPrompt: "New system",
+      userPromptTemplate: "New template",
+    });
+    prismaMock.systemPrompt.findUnique.mockResolvedValue(existing);
+    prismaMock.systemPrompt.update.mockResolvedValue(updated);
+
+    const { PATCH } = await import("@/app/api/prompts/[id]/route");
+    const request = new Request("http://localhost/api/prompts/prompt-id", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "v1 updated",
+        systemPrompt: "New system",
+        userPromptTemplate: "New template",
+      }),
+    });
+
+    const response = await PATCH(request, { params: Promise.resolve({ id: "prompt-id" }) });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.name).toBe("v1 updated");
+    expect(prismaMock.systemPrompt.update).toHaveBeenCalledWith({
+      where: { id: "prompt-id" },
+      data: {
+        name: "v1 updated",
+        systemPrompt: "New system",
+        userPromptTemplate: "New template",
+      },
+    });
+  });
+
+  it("returns 404 when prompt does not exist", async () => {
+    prismaMock.systemPrompt.findUnique.mockResolvedValue(null);
+
+    const { PATCH } = await import("@/app/api/prompts/[id]/route");
+    const request = new Request("http://localhost/api/prompts/missing", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ systemPrompt: "Updated" }),
+    });
+
+    const response = await PATCH(request, { params: Promise.resolve({ id: "missing" }) });
+    expect(response.status).toBe(404);
+  });
+
+  it("returns 401 without session", async () => {
+    mockGetServerSession.mockResolvedValue(null);
+
+    const { PATCH } = await import("@/app/api/prompts/[id]/route");
+    const request = new Request("http://localhost/api/prompts/prompt-id", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ systemPrompt: "Updated" }),
+    });
+
+    const response = await PATCH(request, { params: Promise.resolve({ id: "prompt-id" }) });
+    expect(response.status).toBe(401);
+  });
+});
