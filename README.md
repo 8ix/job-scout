@@ -16,62 +16,53 @@ Self-hosted job opportunity tracking system. Receives scored job listings from n
 
 ## Docker deployment (recommended)
 
-Job Scout is intended to run via Docker. Use the pre-built image from [ghcr.io/8ix/job-scout](https://github.com/8ix/job-scout/pkgs/container/job-scout). The image supports `linux/amd64` and `linux/arm64` (Raspberry Pi 4/5).
+Job Scout runs from the pre-built image at [ghcr.io/8ix/job-scout](https://github.com/8ix/job-scout/pkgs/container/job-scout). No repo checkout or build step required. Supports `linux/amd64` and `linux/arm64` (Raspberry Pi 4/5).
+
+**Image:** `ghcr.io/8ix/job-scout:latest` (or pin a version, e.g. `ghcr.io/8ix/job-scout:4de5ec9`)
 
 ### First-time setup
 
-1. **Clone the repo** (or create the required files manually):
+1. **Create a directory and fetch the compose file:**
 
    ```bash
-   git clone https://github.com/8ix/job-scout.git
-   cd job-scout
-   ```
-
-2. **Create `.env`** from the example:
-
-   ```bash
+   mkdir job-scout && cd job-scout
+   curl -sSL -o docker-compose.ghcr.yml https://raw.githubusercontent.com/8ix/job-scout/main/docker-compose.ghcr.yml
+   curl -sSL -o .env.example https://raw.githubusercontent.com/8ix/job-scout/main/.env.example
    cp .env.example .env
    ```
 
-   Edit `.env` and set at least:
+2. **Edit `.env`** and set:
 
-   - `API_KEY` — Secret for n8n API authentication
-   - `NEXTAUTH_SECRET` — `openssl rand -base64 32`
-   - `NEXTAUTH_URL` — Your public URL (e.g. `https://jobs.yourdomain.com` or `http://localhost:3000`)
-   - `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` — Login credentials for the dashboard
+   | Variable | Example |
+   |----------|---------|
+   | `API_KEY` | Secret for n8n API (e.g. `openssl rand -hex 32`) |
+   | `NEXTAUTH_SECRET` | `openssl rand -base64 32` |
+   | `NEXTAUTH_URL` | `https://jobs.yourdomain.com` or `http://localhost:3000` |
+   | `DASHBOARD_USERNAME` | Login username |
+   | `DASHBOARD_PASSWORD` | Login password |
 
-3. **Start the stack** using the pre-built image:
+3. **Start the stack** (pulls the image and PostgreSQL):
 
    ```bash
    docker compose -f docker-compose.ghcr.yml up -d
    ```
 
-   This will:
-
-   - Pull `ghcr.io/8ix/job-scout:latest` and PostgreSQL
-   - Run database migrations
-   - Start the app on port 3000
-
-4. **Verify**:
+4. **Verify:**
 
    ```bash
    curl http://localhost:3000/api/health
    ```
 
-### Updating to the latest version
+The app runs on port 3000. Migrations run automatically on startup.
 
-To pull and run the newest image (e.g. after a new release):
+### Update to latest
 
 ```bash
 docker compose -f docker-compose.ghcr.yml pull
 docker compose -f docker-compose.ghcr.yml up -d
 ```
 
-The migrate container runs automatically before the app starts, so schema changes are applied on each update.
-
-### Docker Compose file
-
-Use `docker-compose.ghcr.yml`, which pulls the image instead of building locally. For local development builds, use `docker-compose.yml`.
+On Raspberry Pi or any host, this pulls the newest image and restarts the containers.
 
 ---
 
