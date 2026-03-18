@@ -25,7 +25,8 @@ export async function GET(request: Request) {
   const [totalOpportunities, applied, totalRejections, bySource, recentActivity, ...scoreCounts] =
     await Promise.all([
       prisma.opportunity.count(),
-      prisma.opportunity.count({ where: { status: "applied" } }),
+      // Cumulative: ever applied (appliedAt set), regardless of later rejection
+      prisma.opportunity.count({ where: { appliedAt: { not: null } } }),
       prisma.rejection.count(),
       prisma.opportunity.groupBy({
         by: ["source"],

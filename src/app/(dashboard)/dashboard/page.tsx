@@ -47,13 +47,14 @@ async function getStats() {
 
   const [
     totalOpportunities,
-    applied,
+    appliedCount,
     totalRejections,
     rejectedByDate,
     opportunitiesCreatedByDate,
   ] = await Promise.all([
     prisma.opportunity.count(),
-    prisma.opportunity.count({ where: { status: "applied" } }),
+    // Cumulative: ever applied (appliedAt set), regardless of later rejection
+    prisma.opportunity.count({ where: { appliedAt: { not: null } } }),
     prisma.rejection.count(),
     prisma.$queryRaw<DateCountRow[]>`
       SELECT DATE("createdAt")::text as date, COUNT(*)::text as count
@@ -71,7 +72,7 @@ async function getStats() {
     `,
   ]);
 
-  const conversionRate = totalOpportunities > 0 ? applied / totalOpportunities : 0;
+  const conversionRate = totalOpportunities > 0 ? appliedCount / totalOpportunities : 0;
 
   const scoreBands = [
     { band: "Disqualified", min: 0, max: 5 },
@@ -106,7 +107,7 @@ async function getStats() {
   return {
     totalOpportunities,
     totalRejections,
-    applied,
+    applied: appliedCount,
     conversionRate,
     byScore,
     recentActivity,
