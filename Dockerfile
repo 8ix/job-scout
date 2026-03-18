@@ -21,5 +21,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 USER nextjs
-# Default: run app. Override with "npx prisma migrate deploy" for migrate.
-CMD ["sh", "-c", "cd .next/standalone && exec node server.js"]
+# Run migrations, then app. Single container, no separate migrate service.
+CMD ["sh", "-c", "npx prisma migrate deploy && cd .next/standalone && exec node server.js"]
