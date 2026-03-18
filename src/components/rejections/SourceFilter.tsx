@@ -2,11 +2,14 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-const sources = ["All", "Adzuna", "Reed", "JSearch", "ATS", "RSS"];
+interface SourceFilterProps {
+  sources: string[];
+}
 
-export function SourceFilter() {
+export function SourceFilter({ sources }: SourceFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const sourceOptions = ["All", ...sources];
 
   function handleChange(value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -26,7 +29,7 @@ export function SourceFilter() {
       className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-card-foreground"
       aria-label="Filter by source"
     >
-      {sources.map((s) => (
+      {sourceOptions.map((s) => (
         <option key={s} value={s}>
           {s === "All" ? "All Sources" : s}
         </option>

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { OpportunityList } from "@/components/opportunities/OpportunityList";
 import { FilterBar } from "@/components/opportunities/FilterBar";
 import { Pagination } from "@/components/ui/Pagination";
+import { getValidSources } from "@/lib/validators/source";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ interface PageProps {
 }
 
 export default async function OpportunitiesPage({ searchParams }: PageProps) {
-  const params = await searchParams;
+  const [params, sources] = await Promise.all([searchParams, getValidSources()]);
   const page = Math.max(1, parseInt(params.page || "1"));
   const limit = 20;
   const status = params.status || "new";
@@ -48,7 +49,7 @@ export default async function OpportunitiesPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-foreground">Opportunities</h2>
       <Suspense fallback={null}>
-        <FilterBar />
+        <FilterBar sources={sources} />
       </Suspense>
       <OpportunityList opportunities={serialized} />
       <Suspense fallback={null}>

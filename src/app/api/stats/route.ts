@@ -14,9 +14,12 @@ export async function GET(request: Request) {
   fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
   const scoreBands = [
-    { band: "0-3", min: 0, max: 3 },
-    { band: "4-6", min: 4, max: 6 },
-    { band: "7-10", min: 7, max: 10 },
+    { band: "Disqualified", min: 0, max: 5 },
+    { band: "6", min: 6, max: 6 },
+    { band: "7", min: 7, max: 7 },
+    { band: "8", min: 8, max: 8 },
+    { band: "9", min: 9, max: 9 },
+    { band: "10", min: 10, max: 10 },
   ];
 
   const [totalOpportunities, applied, totalRejections, bySource, recentActivity, ...scoreCounts] =

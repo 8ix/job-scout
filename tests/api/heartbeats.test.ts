@@ -14,6 +14,7 @@ vi.mock("next-auth", () => ({
 describe("POST /api/heartbeats", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.feed.findUnique.mockResolvedValue({ id: "f1", name: "Adzuna", createdAt: new Date() });
   });
 
   it("creates a heartbeat with valid input and API key", async () => {

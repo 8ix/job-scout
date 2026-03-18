@@ -26,14 +26,45 @@ model Opportunity {
   description  String?
   status       String    @default("new")
   appliedAt    DateTime?
+  stage        String?
   createdAt    DateTime  @default(now())
   postedAt     DateTime?
+
+  contacts   ApplicationContact[]
+  stageLogs  ApplicationStageLog[]
 
   @@unique([source, jobId])
   @@index([createdAt(sort: Desc)])
   @@index([score(sort: Desc)])
   @@index([status])
+  @@index([stage])
   @@map("opportunities")
+}
+
+model ApplicationContact {
+  id            String   @id @default(uuid())
+  opportunityId String
+  name          String
+  role          String?
+  email         String?
+  phone         String?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  @@index([opportunityId])
+  @@map("application_contacts")
+}
+
+model ApplicationStageLog {
+  id            String   @id @default(uuid())
+  opportunityId String
+  stage         String
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  @@index([opportunityId])
+  @@map("application_stage_logs")
 }
 
 model Rejection {
@@ -75,4 +106,12 @@ model FeedHeartbeat {
 
   @@index([ranAt(sort: Desc)])
   @@map("feed_heartbeats")
+}
+
+model Feed {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("feeds")
 }

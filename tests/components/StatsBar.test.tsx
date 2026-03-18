@@ -25,7 +25,7 @@ describe("StatsBar", () => {
     expect(screen.getByText("Opportunities")).toBeInTheDocument();
     expect(screen.getByText("Rejections")).toBeInTheDocument();
     expect(screen.getByText("Applied")).toBeInTheDocument();
-    expect(screen.getByText("Conversion Rate")).toBeInTheDocument();
+    expect(screen.getByText("% Applied")).toBeInTheDocument();
   });
 
   it("handles zero state", () => {

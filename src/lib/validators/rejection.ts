@@ -1,9 +1,8 @@
 import { z } from "zod";
-import { sourceEnum } from "./source";
 
 export const createRejectionSchema = z.object({
   jobId: z.string().min(1),
-  source: sourceEnum,
+  source: z.string().min(1),
   title: z.string().min(1),
   company: z.string().nullish(),
   url: z.string().url(),

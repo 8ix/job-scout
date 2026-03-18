@@ -18,11 +18,14 @@ describe("GET /api/stats", () => {
 
   it("returns aggregated stats with byScore bands", async () => {
     prismaMock.opportunity.count
-      .mockResolvedValueOnce(100)  // total
-      .mockResolvedValueOnce(15)   // applied
-      .mockResolvedValueOnce(20)   // score 0-3
-      .mockResolvedValueOnce(35)   // score 4-6
-      .mockResolvedValueOnce(45);  // score 7-10
+      .mockResolvedValueOnce(100)   // total
+      .mockResolvedValueOnce(15)    // applied
+      .mockResolvedValueOnce(20)    // Disqualified 0-5
+      .mockResolvedValueOnce(10)    // 6
+      .mockResolvedValueOnce(15)    // 7
+      .mockResolvedValueOnce(25)    // 8
+      .mockResolvedValueOnce(20)    // 9
+      .mockResolvedValueOnce(10);   // 10
     prismaMock.rejection.count.mockResolvedValue(50);
     prismaMock.opportunity.groupBy
       .mockResolvedValueOnce([
@@ -47,9 +50,12 @@ describe("GET /api/stats", () => {
     expect(body.conversionRate).toBeCloseTo(0.15);
     expect(body.bySource).toHaveLength(2);
     expect(body.byScore).toEqual([
-      { band: "0-3", count: 20 },
-      { band: "4-6", count: 35 },
-      { band: "7-10", count: 45 },
+      { band: "Disqualified", count: 20 },
+      { band: "6", count: 10 },
+      { band: "7", count: 15 },
+      { band: "8", count: 25 },
+      { band: "9", count: 20 },
+      { band: "10", count: 10 },
     ]);
   });
 
@@ -57,9 +63,12 @@ describe("GET /api/stats", () => {
     prismaMock.opportunity.count
       .mockResolvedValueOnce(0)   // total
       .mockResolvedValueOnce(0)   // applied
-      .mockResolvedValueOnce(0)   // score 0-3
-      .mockResolvedValueOnce(0)   // score 4-6
-      .mockResolvedValueOnce(0);  // score 7-10
+      .mockResolvedValueOnce(0)   // Disqualified
+      .mockResolvedValueOnce(0)   // 6
+      .mockResolvedValueOnce(0)   // 7
+      .mockResolvedValueOnce(0)   // 8
+      .mockResolvedValueOnce(0)   // 9
+      .mockResolvedValueOnce(0);  // 10
     prismaMock.rejection.count.mockResolvedValue(0);
     prismaMock.opportunity.groupBy
       .mockResolvedValueOnce([])
@@ -76,9 +85,12 @@ describe("GET /api/stats", () => {
     expect(body.conversionRate).toBe(0);
     expect(body.bySource).toEqual([]);
     expect(body.byScore).toEqual([
-      { band: "0-3", count: 0 },
-      { band: "4-6", count: 0 },
-      { band: "7-10", count: 0 },
+      { band: "Disqualified", count: 0 },
+      { band: "6", count: 0 },
+      { band: "7", count: 0 },
+      { band: "8", count: 0 },
+      { band: "9", count: 0 },
+      { band: "10", count: 0 },
     ]);
   });
 

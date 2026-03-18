@@ -20,6 +20,7 @@ export function buildOpportunity(overrides: Record<string, unknown> = {}) {
     description: "A great opportunity for a TypeScript developer...",
     status: "new",
     appliedAt: null,
+    stage: null,
     createdAt: new Date(),
     postedAt: new Date(),
     ...overrides,
@@ -63,6 +64,30 @@ export function buildFeedHeartbeat(overrides: Record<string, unknown> = {}) {
     jobsScored: 10,
     jobsOpportunity: 3,
     ranAt: new Date(),
+    ...overrides,
+  };
+}
+
+export function buildApplicationContact(overrides: Record<string, unknown> = {}) {
+  return {
+    id: randomUUID(),
+    opportunityId: randomUUID(),
+    name: "Jane Smith",
+    role: "HR",
+    email: "jane@example.com",
+    phone: "+44 7700 900000",
+    notes: null,
+    createdAt: new Date(),
+    ...overrides,
+  };
+}
+
+export function buildApplicationStageLog(overrides: Record<string, unknown> = {}) {
+  return {
+    id: randomUUID(),
+    opportunityId: randomUUID(),
+    stage: "Applied",
+    createdAt: new Date(),
     ...overrides,
   };
 }

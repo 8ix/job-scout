@@ -3,12 +3,16 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
-const sources = ["All", "Adzuna", "Reed", "JSearch", "ATS", "RSS"];
 const statuses = ["All", "new", "reviewed", "applied", "rejected", "archived"];
 const workingModels = ["All", "Remote", "Hybrid", "On-site", "Unknown"];
 const listingTypes = ["All", "Direct", "Recruiter"];
 
-export function FilterBar() {
+interface FilterBarProps {
+  sources: string[];
+}
+
+export function FilterBar({ sources }: FilterBarProps) {
+  const sourceOptions = ["All", ...sources];
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -38,7 +42,7 @@ export function FilterBar() {
         className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-card-foreground"
         aria-label="Filter by source"
       >
-        {sources.map((s) => (
+        {sourceOptions.map((s) => (
           <option key={s} value={s}>{s === "All" ? "All Sources" : s}</option>
         ))}
       </select>

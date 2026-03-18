@@ -10,9 +10,11 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => mockSearchParams,
 }));
 
+const sources = ["Adzuna", "Reed", "JSearch"];
+
 describe("FilterBar", () => {
   it("renders all filter dropdowns and score input", () => {
-    render(<FilterBar />);
+    render(<FilterBar sources={sources} />);
 
     expect(screen.getByLabelText("Filter by source")).toBeInTheDocument();
     expect(screen.getByLabelText("Filter by status")).toBeInTheDocument();
@@ -21,17 +23,17 @@ describe("FilterBar", () => {
     expect(screen.getByLabelText("Minimum score")).toBeInTheDocument();
   });
 
-  it("renders correct source options", () => {
-    render(<FilterBar />);
+  it("renders correct source options from props", () => {
+    render(<FilterBar sources={sources} />);
     const sourceSelect = screen.getByLabelText("Filter by source");
     const options = sourceSelect.querySelectorAll("option");
-    expect(options).toHaveLength(6);
+    expect(options).toHaveLength(4);
     expect(options[0].textContent).toBe("All Sources");
     expect(options[1].textContent).toBe("Adzuna");
   });
 
   it("renders correct status options", () => {
-    render(<FilterBar />);
+    render(<FilterBar sources={sources} />);
     const statusSelect = screen.getByLabelText("Filter by status");
     const options = statusSelect.querySelectorAll("option");
     expect(options).toHaveLength(6);
@@ -39,7 +41,7 @@ describe("FilterBar", () => {
   });
 
   it("renders correct working model options", () => {
-    render(<FilterBar />);
+    render(<FilterBar sources={sources} />);
     const select = screen.getByLabelText("Filter by working model");
     const options = select.querySelectorAll("option");
     expect(options).toHaveLength(5);
@@ -47,7 +49,7 @@ describe("FilterBar", () => {
   });
 
   it("renders correct listing type options", () => {
-    render(<FilterBar />);
+    render(<FilterBar sources={sources} />);
     const select = screen.getByLabelText("Filter by listing type");
     const options = select.querySelectorAll("option");
     expect(options).toHaveLength(3);

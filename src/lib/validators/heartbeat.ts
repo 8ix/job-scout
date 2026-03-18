@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { sourceEnum } from "./source";
 
 export const createHeartbeatSchema = z.object({
-  source: sourceEnum,
+  source: z.string().min(1),
   jobsReceived: z.number().int().min(0),
   jobsNew: z.number().int().min(0),
   jobsScored: z.number().int().min(0),

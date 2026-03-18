@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { validateApiKey, unauthorizedResponse } from "@/lib/auth/api-key";
 import { authOptions } from "@/lib/auth/session";
 import { createHeartbeatSchema } from "@/lib/validators/heartbeat";
+import { isValidSource, getValidSources } from "@/lib/validators/source";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,14 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation failed", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  if (!(await isValidSource(parsed.data.source))) {
+    const valid = await getValidSources();
+    return NextResponse.json(
+      { error: `Invalid source. Must be one of: ${valid.join(", ")}` },
       { status: 400 }
     );
   }

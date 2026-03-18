@@ -17,6 +17,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/opportunities/:path*",
+    "/applications/:path*",
     "/rejections/:path*",
     "/prompts/:path*",
     "/feeds/:path*",

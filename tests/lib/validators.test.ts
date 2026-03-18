@@ -24,8 +24,12 @@ describe("createOpportunitySchema", () => {
     expect(createOpportunitySchema.safeParse(rest).success).toBe(false);
   });
 
-  it("rejects invalid source", () => {
-    expect(createOpportunitySchema.safeParse({ ...valid, source: "LinkedIn" }).success).toBe(false);
+  it("accepts any non-empty string as source (DB-validated at API layer)", () => {
+    expect(createOpportunitySchema.safeParse({ ...valid, source: "Total Jobs" }).success).toBe(true);
+  });
+
+  it("rejects empty source", () => {
+    expect(createOpportunitySchema.safeParse({ ...valid, source: "" }).success).toBe(false);
   });
 
   it("rejects score > 10", () => {

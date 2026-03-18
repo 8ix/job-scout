@@ -1,4 +1,18 @@
 services:
+  job-scout-migrate:
+    build:
+      context: .
+      target: build
+    container_name: job-scout-migrate
+    depends_on:
+      job-scout-db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://jobscout:jobscout@job-scout-db:5432/jobscout
+    command: npx prisma migrate deploy
+    networks:
+      - job-scout-net
+
   job-scout:
     build: .
     container_name: job-scout
@@ -6,6 +20,8 @@ services:
     depends_on:
       job-scout-db:
         condition: service_healthy
+      job-scout-migrate:
+        condition: service_completed_successfully
     env_file:
       - .env
     environment:

@@ -15,13 +15,24 @@ export async function GET(
   if (!session) return unauthorizedResponse();
 
   const { id } = await params;
-  const opportunity = await prisma.opportunity.findUnique({ where: { id } });
+  const opportunity = await prisma.opportunity.findUnique({
+    where: { id },
+    include: {
+      stageLogs: { orderBy: { createdAt: "asc" } },
+    },
+  });
 
   if (!opportunity) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(opportunity);
+  return NextResponse.json({
+    ...opportunity,
+    stageLogs: opportunity.stageLogs.map((log) => ({
+      ...log,
+      createdAt: log.createdAt.toISOString(),
+    })),
+  });
 }
 
 export async function PATCH(
@@ -42,9 +53,41 @@ export async function PATCH(
     );
   }
 
-  const data: Record<string, unknown> = { status: parsed.data.status };
-  if (parsed.data.status === "applied") {
-    data.appliedAt = new Date();
+  const existing = await prisma.opportunity.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const data: Record<string, unknown> = {};
+  if (parsed.data.status !== undefined) {
+    data.status = parsed.data.status;
+    if (parsed.data.status === "applied") {
+      data.appliedAt = new Date();
+      if (!existing.stage) {
+        data.stage = "Applied";
+      }
+    }
+  }
+  if (parsed.data.stage !== undefined) {
+    if (existing.status !== "applied") {
+      return NextResponse.json(
+        { error: "Stage can only be updated for applied opportunities" },
+        { status: 400 }
+      );
+    }
+    data.stage = parsed.data.stage;
+    // Rejected or Archived: create Rejection record and set status so it leaves the applications list
+    if (parsed.data.stage === "Rejected" || parsed.data.stage === "Archived") {
+      data.status = "rejected";
+      // Will create Rejection after update (need opportunity data)
+    }
+  }
+
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json(
+      { error: "No valid fields to update" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -52,6 +95,41 @@ export async function PATCH(
       where: { id },
       data,
     });
+
+    const newStage =
+      parsed.data.stage ??
+      (parsed.data.status === "applied" && !existing.stage ? "Applied" : null);
+    if (newStage && newStage !== existing.stage) {
+      await prisma.applicationStageLog.create({
+        data: {
+          opportunityId: id,
+          stage: newStage,
+        },
+      });
+    }
+
+    if (
+      (parsed.data.stage === "Rejected" || parsed.data.stage === "Archived") &&
+      existing.stage !== "Rejected" &&
+      existing.stage !== "Archived"
+    ) {
+      const redFlags =
+        parsed.data.stage === "Rejected"
+          ? "Organization rejected our application"
+          : "Application went stale - archived";
+      await prisma.rejection.create({
+        data: {
+          jobId: existing.jobId,
+          source: existing.source,
+          title: existing.title,
+          company: existing.company,
+          url: existing.url,
+          score: existing.score,
+          redFlags,
+        },
+      });
+    }
+
     return NextResponse.json(opportunity);
   } catch (error: unknown) {
     if (

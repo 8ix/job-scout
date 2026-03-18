@@ -14,6 +14,7 @@ vi.mock("next-auth", () => ({
 describe("POST /api/rejections", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.feed.findUnique.mockResolvedValue({ id: "f1", name: "Reed", createdAt: new Date() });
   });
 
   it("creates a rejection with valid input and API key", async () => {

@@ -74,6 +74,7 @@ npm run test:coverage
 - `POST /api/opportunities` — Ingest scored job
 - `POST /api/rejections` — Ingest rejected job
 - `POST /api/heartbeats` — Pipeline run heartbeat
+- `POST /api/seen-ids` — Batch check: send `{ "source": "Adzuna", "ids": ["id1", "id2", ...] }`, returns only the IDs from the request that already exist (for deduplication)
 - `GET /api/prompts/active` — Fetch active scoring prompt (no auth)
 
 ### Dashboard-facing (session auth)

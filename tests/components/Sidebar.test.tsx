@@ -18,7 +18,7 @@ describe("Sidebar", () => {
     expect(screen.getByTestId("nav-opportunities")).toBeInTheDocument();
     expect(screen.getByTestId("nav-rejections")).toBeInTheDocument();
     expect(screen.getByTestId("nav-prompts")).toBeInTheDocument();
-    expect(screen.getByTestId("nav-feed-health")).toBeInTheDocument();
+    expect(screen.getByTestId("nav-feeds")).toBeInTheDocument();
     expect(screen.getByTestId("nav-cv")).toBeInTheDocument();
   });
 

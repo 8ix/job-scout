@@ -14,6 +14,7 @@ vi.mock("next-auth", () => ({
 describe("POST /api/opportunities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.feed.findUnique.mockResolvedValue({ id: "f1", name: "Adzuna", createdAt: new Date() });
   });
 
   it("creates a new opportunity with valid input and API key", async () => {
@@ -174,9 +175,13 @@ describe("GET /api/opportunities/:id", () => {
     mockGetServerSession.mockResolvedValue({ user: { name: "admin" } });
   });
 
-  it("returns a single opportunity", async () => {
+  it("returns a single opportunity with stage timeline", async () => {
     const opp = buildOpportunity({ id: "test-id" });
-    prismaMock.opportunity.findUnique.mockResolvedValue(opp);
+    const stageLogs = [
+      { id: "log-1", opportunityId: "test-id", stage: "Applied", createdAt: new Date("2026-03-01T10:00:00Z") },
+      { id: "log-2", opportunityId: "test-id", stage: "Screening", createdAt: new Date("2026-03-05T14:00:00Z") },
+    ];
+    prismaMock.opportunity.findUnique.mockResolvedValue({ ...opp, stageLogs });
 
     const { GET } = await import("@/app/api/opportunities/[id]/route");
     const request = new Request("http://localhost/api/opportunities/test-id");
@@ -186,6 +191,10 @@ describe("GET /api/opportunities/:id", () => {
 
     expect(response.status).toBe(200);
     expect(body.id).toBe("test-id");
+    expect(body.stageLogs).toHaveLength(2);
+    expect(body.stageLogs[0].stage).toBe("Applied");
+    expect(body.stageLogs[1].stage).toBe("Screening");
+    expect(body.stageLogs[0].createdAt).toBe("2026-03-01T10:00:00.000Z");
   });
 
   it("returns 404 when not found", async () => {
@@ -206,8 +215,16 @@ describe("PATCH /api/opportunities/:id", () => {
   });
 
   it("updates status to applied and sets appliedAt", async () => {
+    const existing = buildOpportunity({ id: "test-id", status: "new" });
     const updated = buildOpportunity({ id: "test-id", status: "applied", appliedAt: new Date() });
+    prismaMock.opportunity.findUnique.mockResolvedValue(existing);
     prismaMock.opportunity.update.mockResolvedValue(updated);
+    prismaMock.applicationStageLog.create.mockResolvedValue({
+      id: "log-1",
+      opportunityId: "test-id",
+      stage: "Applied",
+      createdAt: new Date(),
+    });
 
     const { PATCH } = await import("@/app/api/opportunities/[id]/route");
     const request = new Request("http://localhost/api/opportunities/test-id", {
@@ -224,10 +241,15 @@ describe("PATCH /api/opportunities/:id", () => {
 
     const updateCall = prismaMock.opportunity.update.mock.calls[0][0];
     expect(updateCall.data.appliedAt).toBeDefined();
+    expect(prismaMock.applicationStageLog.create).toHaveBeenCalledWith({
+      data: { opportunityId: "test-id", stage: "Applied" },
+    });
   });
 
   it("updates status to rejected without setting appliedAt", async () => {
+    const existing = buildOpportunity({ id: "test-id", status: "new" });
     const updated = buildOpportunity({ id: "test-id", status: "rejected" });
+    prismaMock.opportunity.findUnique.mockResolvedValue(existing);
     prismaMock.opportunity.update.mockResolvedValue(updated);
 
     const { PATCH } = await import("@/app/api/opportunities/[id]/route");
@@ -244,9 +266,7 @@ describe("PATCH /api/opportunities/:id", () => {
   });
 
   it("returns 404 when opportunity does not exist", async () => {
-    const prismaError = new Error("Record not found");
-    Object.assign(prismaError, { code: "P2025" });
-    prismaMock.opportunity.update.mockRejectedValue(prismaError);
+    prismaMock.opportunity.findUnique.mockResolvedValue(null);
 
     const { PATCH } = await import("@/app/api/opportunities/[id]/route");
     const request = new Request("http://localhost/api/opportunities/non-existent", {
@@ -262,6 +282,8 @@ describe("PATCH /api/opportunities/:id", () => {
   });
 
   it("returns 400 for invalid status", async () => {
+    prismaMock.opportunity.findUnique.mockResolvedValue(buildOpportunity({ id: "test-id" }));
+
     const { PATCH } = await import("@/app/api/opportunities/[id]/route");
     const request = new Request("http://localhost/api/opportunities/test-id", {
       method: "PATCH",
@@ -271,5 +293,176 @@ describe("PATCH /api/opportunities/:id", () => {
 
     const response = await PATCH(request, { params: Promise.resolve({ id: "test-id" }) });
     expect(response.status).toBe(400);
+  });
+
+  it("sets stage to Rejected, creates Rejection, and sets status to rejected", async () => {
+    const existing = buildOpportunity({
+      id: "test-id",
+      status: "applied",
+      jobId: "job-123",
+      source: "Adzuna",
+      title: "Developer",
+      company: "Acme",
+      url: "https://example.com/job",
+      score: 8,
+    });
+    const updated = buildOpportunity({
+      ...existing,
+      status: "rejected",
+      stage: "Rejected",
+    });
+    prismaMock.opportunity.findUnique.mockResolvedValue(existing);
+    prismaMock.opportunity.update.mockResolvedValue(updated);
+    prismaMock.applicationStageLog.create.mockResolvedValue({ id: "log-1", opportunityId: "test-id", stage: "Rejected", createdAt: new Date() });
+    prismaMock.rejection.create.mockResolvedValue({
+      id: "rej-1",
+      jobId: "job-123",
+      source: "Adzuna",
+      title: "Developer",
+      company: "Acme",
+      url: "https://example.com/job",
+      score: 8,
+      redFlags: "Organization rejected our application",
+      createdAt: new Date(),
+    });
+
+    const { PATCH } = await import("@/app/api/opportunities/[id]/route");
+    const request = new Request("http://localhost/api/opportunities/test-id", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: "Rejected" }),
+    });
+
+    const response = await PATCH(request, { params: Promise.resolve({ id: "test-id" }) });
+    expect(response.status).toBe(200);
+
+    const updateCall = prismaMock.opportunity.update.mock.calls[0][0];
+    expect(updateCall.data.status).toBe("rejected");
+    expect(updateCall.data.stage).toBe("Rejected");
+
+    expect(prismaMock.rejection.create).toHaveBeenCalledWith({
+      data: {
+        jobId: "job-123",
+        source: "Adzuna",
+        title: "Developer",
+        company: "Acme",
+        url: "https://example.com/job",
+        score: 8,
+        redFlags: "Organization rejected our application",
+      },
+    });
+    expect(prismaMock.applicationStageLog.create).toHaveBeenCalledWith({
+      data: { opportunityId: "test-id", stage: "Rejected" },
+    });
+  });
+
+  it("creates stage log when changing from Applied to Screening", async () => {
+    const existing = buildOpportunity({
+      id: "test-id",
+      status: "applied",
+      stage: "Applied",
+    });
+    const updated = buildOpportunity({ ...existing, stage: "Screening" });
+    prismaMock.opportunity.findUnique.mockResolvedValue(existing);
+    prismaMock.opportunity.update.mockResolvedValue(updated);
+    prismaMock.applicationStageLog.create.mockResolvedValue({
+      id: "log-1",
+      opportunityId: "test-id",
+      stage: "Screening",
+      createdAt: new Date(),
+    });
+
+    const { PATCH } = await import("@/app/api/opportunities/[id]/route");
+    const request = new Request("http://localhost/api/opportunities/test-id", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: "Screening" }),
+    });
+
+    const response = await PATCH(request, { params: Promise.resolve({ id: "test-id" }) });
+    expect(response.status).toBe(200);
+    expect(prismaMock.applicationStageLog.create).toHaveBeenCalledWith({
+      data: { opportunityId: "test-id", stage: "Screening" },
+    });
+  });
+
+  it("does not create duplicate Rejection when already Rejected", async () => {
+    const existing = buildOpportunity({
+      id: "test-id",
+      status: "applied",
+      stage: "Rejected",
+    });
+    const updated = buildOpportunity({ ...existing, status: "rejected", stage: "Rejected" });
+    prismaMock.opportunity.findUnique.mockResolvedValue(existing);
+    prismaMock.opportunity.update.mockResolvedValue(updated);
+
+    const { PATCH } = await import("@/app/api/opportunities/[id]/route");
+    const request = new Request("http://localhost/api/opportunities/test-id", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: "Rejected" }),
+    });
+
+    await PATCH(request, { params: Promise.resolve({ id: "test-id" }) });
+
+    expect(prismaMock.rejection.create).not.toHaveBeenCalled();
+  });
+
+  it("sets stage to Archived, creates Rejection with stale reason, and sets status to rejected", async () => {
+    const existing = buildOpportunity({
+      id: "test-id",
+      status: "applied",
+      jobId: "job-456",
+      source: "Reed",
+      title: "Engineer",
+      company: "Beta Inc",
+      url: "https://example.com/job2",
+      score: 7,
+    });
+    const updated = buildOpportunity({
+      ...existing,
+      status: "rejected",
+      stage: "Archived",
+    });
+    prismaMock.opportunity.findUnique.mockResolvedValue(existing);
+    prismaMock.opportunity.update.mockResolvedValue(updated);
+    prismaMock.applicationStageLog.create.mockResolvedValue({ id: "log-2", opportunityId: "test-id", stage: "Archived", createdAt: new Date() });
+    prismaMock.rejection.create.mockResolvedValue({
+      id: "rej-2",
+      jobId: "job-456",
+      source: "Reed",
+      title: "Engineer",
+      company: "Beta Inc",
+      url: "https://example.com/job2",
+      score: 7,
+      redFlags: "Application went stale - archived",
+      createdAt: new Date(),
+    });
+
+    const { PATCH } = await import("@/app/api/opportunities/[id]/route");
+    const request = new Request("http://localhost/api/opportunities/test-id", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: "Archived" }),
+    });
+
+    const response = await PATCH(request, { params: Promise.resolve({ id: "test-id" }) });
+    expect(response.status).toBe(200);
+
+    const updateCall = prismaMock.opportunity.update.mock.calls[0][0];
+    expect(updateCall.data.status).toBe("rejected");
+    expect(updateCall.data.stage).toBe("Archived");
+
+    expect(prismaMock.rejection.create).toHaveBeenCalledWith({
+      data: {
+        jobId: "job-456",
+        source: "Reed",
+        title: "Engineer",
+        company: "Beta Inc",
+        url: "https://example.com/job2",
+        score: 7,
+        redFlags: "Application went stale - archived",
+      },
+    });
   });
 });

@@ -11,7 +11,7 @@ const cards = [
   { key: "totalOpportunities" as const, label: "Opportunities", format: (v: number) => String(v) },
   { key: "totalRejections" as const, label: "Rejections", format: (v: number) => String(v) },
   { key: "applied" as const, label: "Applied", format: (v: number) => String(v) },
-  { key: "conversionRate" as const, label: "Conversion Rate", format: (v: number) => `${(v * 100).toFixed(1)}%` },
+  { key: "conversionRate" as const, label: "% Applied", format: (v: number) => `${(v * 100).toFixed(1)}%` },
 ];
 
 export function StatsBar({ stats }: StatsBarProps) {
