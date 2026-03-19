@@ -20,6 +20,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+# Standalone does not include static files; copy them so CSS/JS load (fixes 404)
+COPY --from=build /app/.next/static /app/.next/standalone/.next/static
+COPY --from=build /app/public /app/.next/standalone/public
 USER nextjs
 # Run migrations, then app. Single container, no separate migrate service.
 CMD ["sh", "-c", "npx prisma migrate deploy && cd .next/standalone && exec node server.js"]
