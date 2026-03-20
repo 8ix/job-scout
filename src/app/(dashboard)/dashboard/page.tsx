@@ -3,6 +3,8 @@ import { StatsBar } from "@/components/dashboard/StatsBar";
 import { DailyFeedJobs } from "@/components/dashboard/DailyFeedJobs";
 import { ScoreChart } from "@/components/dashboard/ScoreChart";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { ReviewFlash } from "@/components/dashboard/ReviewFlash";
+import { UpcomingInterviews } from "@/components/dashboard/UpcomingInterviews";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +51,7 @@ async function getStats() {
     totalOpportunities,
     appliedCount,
     totalRejections,
+    newOpportunitiesCount,
     rejectedByDate,
     opportunitiesCreatedByDate,
   ] = await Promise.all([
@@ -56,6 +59,7 @@ async function getStats() {
     // Cumulative: ever applied (appliedAt set), regardless of later rejection
     prisma.opportunity.count({ where: { appliedAt: { not: null } } }),
     prisma.rejection.count(),
+    prisma.opportunity.count({ where: { status: "new" } }),
     prisma.$queryRaw<DateCountRow[]>`
       SELECT DATE("createdAt")::text as date, COUNT(*)::text as count
       FROM rejections
@@ -108,6 +112,7 @@ async function getStats() {
     totalOpportunities,
     totalRejections,
     applied: appliedCount,
+    newOpportunitiesCount,
     conversionRate,
     byScore,
     recentActivity,
@@ -178,16 +183,48 @@ async function getDailyFeedJobsData() {
   });
 }
 
+async function getUpcomingScheduledEvents() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 14);
+
+  const events = await prisma.applicationScheduledEvent.findMany({
+    where: {
+      scheduledAt: { gte: start, lte: end },
+    },
+    orderBy: { scheduledAt: "asc" },
+    include: {
+      opportunity: { select: { title: true, company: true } },
+    },
+  });
+
+  return events.map((e) => ({
+    id: e.id,
+    kind: e.kind,
+    scheduledAt: e.scheduledAt.toISOString(),
+    notes: e.notes,
+    company: e.opportunity.company,
+    title: e.opportunity.title,
+    opportunityId: e.opportunityId,
+  }));
+}
+
 export default async function DashboardPage() {
-  const [stats, dailyFeedJobs] = await Promise.all([
+  const [stats, dailyFeedJobs, upcoming] = await Promise.all([
     getStats(),
     getDailyFeedJobsData(),
+    getUpcomingScheduledEvents(),
   ]);
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-      <StatsBar stats={stats} />
+      <ReviewFlash count={stats.newOpportunitiesCount} />
+      <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,360px)] lg:items-start">
+        <StatsBar stats={stats} />
+        <UpcomingInterviews events={upcoming} />
+      </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <DailyFeedJobs feeds={dailyFeedJobs} />
         <ScoreChart byScore={stats.byScore} />

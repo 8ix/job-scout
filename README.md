@@ -111,9 +111,17 @@ docker compose -f docker-compose.dev.yml up -d --build
 - `POST /api/heartbeats` — Pipeline heartbeat
 - `POST /api/seen-ids` — Batch deduplication check
 - `GET /api/prompts/active` — Active scoring prompt (no auth)
+- `POST /api/applications` — Create a manual / external application (`source: manual`, optional `appliedVia`, defaults to `External`)
+- `PATCH /api/applications/:id` — Update application fields, `status`, or `stage` (same rules as opportunity PATCH; archive/reject via `stage`)
+- `GET /api/applications/:id` — Single application with contacts, stage logs, scheduled events
+- `POST /api/applications/:id/events` — Add screening / interview (`kind`, `scheduledAt`, optional `notes`)
+- `PATCH /api/applications/:id/events/:eventId` — Update scheduled event
+- `DELETE /api/applications/:id/events/:eventId` — Remove scheduled event
+
+Session **or** API key: `POST/PATCH/DELETE` on `/api/applications*` accept either a logged-in dashboard session or `X-API-Key`.
 
 ### Dashboard (session auth)
-- `GET /api/opportunities`, `PATCH /api/opportunities/:id`
+- `GET /api/opportunities`, `PATCH /api/opportunities/:id` (includes enrichment: `appliedVia`, `recruiterContact`, `fullJobSpecification`, etc.)
 - `GET /api/rejections`
 - `GET /api/prompts`, `POST /api/prompts`, `PATCH /api/prompts/:id/activate`
 - `GET /api/stats`, `GET /api/health`

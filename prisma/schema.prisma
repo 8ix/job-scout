@@ -19,7 +19,7 @@ model Opportunity {
   salaryMin    Int?
   salaryMax    Int?
   score        Int
-  verdict      String
+  verdict      String?
   matchReasons String?
   redFlags     String?
   url          String
@@ -29,9 +29,13 @@ model Opportunity {
   stage        String?
   createdAt    DateTime  @default(now())
   postedAt     DateTime?
+  appliedVia           String?
+  recruiterContact     String?
+  fullJobSpecification String? @db.Text
 
-  contacts   ApplicationContact[]
-  stageLogs  ApplicationStageLog[]
+  contacts        ApplicationContact[]
+  stageLogs       ApplicationStageLog[]
+  scheduledEvents ApplicationScheduledEvent[]
 
   @@unique([source, jobId])
   @@index([createdAt(sort: Desc)])
@@ -65,6 +69,21 @@ model ApplicationStageLog {
   opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
   @@index([opportunityId])
   @@map("application_stage_logs")
+}
+
+model ApplicationScheduledEvent {
+  id            String   @id @default(uuid())
+  opportunityId String
+  kind          String
+  scheduledAt   DateTime
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledAt])
+  @@index([opportunityId])
+  @@map("application_scheduled_events")
 }
 
 model Rejection {

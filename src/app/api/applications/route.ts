@@ -1,10 +1,75 @@
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth/session";
 import { unauthorizedResponse } from "@/lib/auth/api-key";
+import { isSessionOrApiKeyAuthorized } from "@/lib/auth/session-or-api-key";
+import { createManualApplicationSchema } from "@/lib/validators/application-manual";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 
 export const dynamic = "force-dynamic";
+
+export async function POST(request: Request) {
+  if (!(await isSessionOrApiKeyAuthorized(request.headers))) {
+    return unauthorizedResponse();
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const parsed = createManualApplicationSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const d = parsed.data;
+  const appliedVia = d.appliedVia ?? "External";
+  const postedAt = d.postedAt ? new Date(d.postedAt) : null;
+
+  const opportunity = await prisma.opportunity.create({
+    data: {
+      jobId: randomUUID(),
+      source: MANUAL_SOURCE,
+      title: d.title,
+      company: d.company,
+      location: d.location ?? null,
+      workingModel: d.workingModel ?? null,
+      listingType: d.listingType ?? null,
+      salaryMin: d.salaryMin ?? null,
+      salaryMax: d.salaryMax ?? null,
+      score: d.score,
+      verdict: null,
+      matchReasons: null,
+      redFlags: null,
+      url: d.url,
+      description: d.description ?? null,
+      status: "applied",
+      appliedAt: new Date(),
+      stage: "Applied",
+      postedAt,
+      appliedVia,
+      recruiterContact: d.recruiterContact ?? null,
+      fullJobSpecification: d.fullJobSpecification ?? null,
+    },
+  });
+
+  await prisma.applicationStageLog.create({
+    data: {
+      opportunityId: opportunity.id,
+      stage: "Applied",
+    },
+  });
+
+  return NextResponse.json(opportunity, { status: 201 });
+}
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -26,7 +91,7 @@ export async function GET(request: Request) {
   }
 
   const ids = opportunities.map((o) => o.id);
-  const [contacts, stageLogs] = await Promise.all([
+  const [contacts, stageLogs, scheduledEvents] = await Promise.all([
     prisma.applicationContact.findMany({
       where: { opportunityId: { in: ids } },
       orderBy: { createdAt: "asc" },
@@ -34,6 +99,10 @@ export async function GET(request: Request) {
     prisma.applicationStageLog.findMany({
       where: { opportunityId: { in: ids } },
       orderBy: { createdAt: "asc" },
+    }),
+    prisma.applicationScheduledEvent.findMany({
+      where: { opportunityId: { in: ids } },
+      orderBy: { scheduledAt: "asc" },
     }),
   ]);
 
@@ -57,6 +126,13 @@ export async function GET(request: Request) {
       .map((s) => ({
         ...s,
         createdAt: s.createdAt.toISOString(),
+      })),
+    scheduledEvents: scheduledEvents
+      .filter((e) => e.opportunityId === o.id)
+      .map((e) => ({
+        ...e,
+        scheduledAt: e.scheduledAt.toISOString(),
+        createdAt: e.createdAt.toISOString(),
       })),
   }));
 

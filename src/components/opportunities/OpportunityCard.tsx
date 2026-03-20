@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
+
 interface Opportunity {
   id: string;
   title: string;
   company: string;
   location: string | null;
   score: number;
-  verdict: string;
+  verdict: string | null;
   matchReasons: string | null;
   redFlags: string | null;
   url: string;
@@ -49,7 +51,9 @@ export function OpportunityCard({ opportunity, onStatusChange }: OpportunityCard
       </div>
 
       <div className="flex flex-wrap gap-2 text-xs">
-        <span className="rounded-full bg-muted px-2.5 py-0.5 text-muted-foreground">{opp.verdict}</span>
+        {opp.verdict && (
+          <span className="rounded-full bg-muted px-2.5 py-0.5 text-muted-foreground">{opp.verdict}</span>
+        )}
         <span className="rounded-full bg-muted px-2.5 py-0.5 text-muted-foreground">{opp.source}</span>
         {opp.workingModel && (
           <span className="rounded-full bg-muted px-2.5 py-0.5 text-muted-foreground">{opp.workingModel}</span>
@@ -78,15 +82,23 @@ export function OpportunityCard({ opportunity, onStatusChange }: OpportunityCard
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-2 border-t border-border">
-        <a
-          href={opp.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          View listing
-        </a>
+      <div className="flex items-center justify-between pt-2 border-t border-border flex-wrap gap-2">
+        <div className="flex gap-3">
+          <a
+            href={opp.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            View listing
+          </a>
+          <Link
+            href={`/opportunities/${opp.id}/edit`}
+            className="text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"
+          >
+            Edit details
+          </Link>
+        </div>
         {opp.status === "new" && (
           <div className="flex gap-2">
             <button

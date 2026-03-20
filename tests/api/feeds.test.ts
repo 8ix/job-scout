@@ -26,7 +26,7 @@ describe("GET /api/feeds", () => {
     const { GET } = await import("@/app/api/feeds/route");
     const request = new Request("http://localhost/api/feeds");
 
-    const response = await GET(request);
+    const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -40,7 +40,7 @@ describe("GET /api/feeds", () => {
     const { GET } = await import("@/app/api/feeds/route");
     const request = new Request("http://localhost/api/feeds");
 
-    const response = await GET(request);
+    const response = await GET();
     expect(response.status).toBe(401);
   });
 });

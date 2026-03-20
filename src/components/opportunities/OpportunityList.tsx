@@ -9,7 +9,7 @@ interface Opportunity {
   company: string;
   location: string | null;
   score: number;
-  verdict: string;
+  verdict: string | null;
   matchReasons: string | null;
   redFlags: string | null;
   url: string;
@@ -30,10 +30,14 @@ export function OpportunityList({ opportunities }: OpportunityListProps) {
   const router = useRouter();
 
   async function handleStatusChange(id: string, status: string) {
+    const body: Record<string, unknown> = { status };
+    if (status === "applied") {
+      body.appliedVia = "Job Scout";
+    }
     await fetch(`/api/opportunities/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(body),
     });
     router.refresh();
   }

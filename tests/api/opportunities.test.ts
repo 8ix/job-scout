@@ -181,7 +181,11 @@ describe("GET /api/opportunities/:id", () => {
       { id: "log-1", opportunityId: "test-id", stage: "Applied", createdAt: new Date("2026-03-01T10:00:00Z") },
       { id: "log-2", opportunityId: "test-id", stage: "Screening", createdAt: new Date("2026-03-05T14:00:00Z") },
     ];
-    prismaMock.opportunity.findUnique.mockResolvedValue({ ...opp, stageLogs });
+    prismaMock.opportunity.findUnique.mockResolvedValue({
+      ...opp,
+      stageLogs,
+      scheduledEvents: [],
+    });
 
     const { GET } = await import("@/app/api/opportunities/[id]/route");
     const request = new Request("http://localhost/api/opportunities/test-id");

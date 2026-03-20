@@ -50,6 +50,13 @@ export const prismaMock = {
     findMany: vi.fn(),
     deleteMany: vi.fn(),
   },
+  applicationScheduledEvent: {
+    create: vi.fn(),
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
   $queryRaw: vi.fn(),
   $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(prismaMock)),
 };

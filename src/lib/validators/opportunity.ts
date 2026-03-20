@@ -25,7 +25,7 @@ export const createOpportunitySchema = z.object({
   salaryMin: z.number().int().nullish(),
   salaryMax: z.number().int().nullish(),
   score: z.number().int().min(0).max(10),
-  verdict: verdictEnum,
+  verdict: verdictEnum.nullish(),
   matchReasons: z.string().nullish(),
   redFlags: z.string().nullish(),
   url: z.string().url(),
@@ -37,10 +37,28 @@ export const updateOpportunitySchema = z
   .object({
     status: statusEnum.optional(),
     stage: applicationStageEnum.optional(),
+    title: z.string().min(1).optional(),
+    company: z.string().min(1).optional(),
+    url: z.string().min(1).optional(),
+    score: z.number().int().min(0).max(10).optional(),
+    location: z.string().nullish(),
+    workingModel: workingModelEnum.nullish(),
+    listingType: listingTypeEnum.nullish(),
+    salaryMin: z.number().int().nullish(),
+    salaryMax: z.number().int().nullish(),
+    description: z.string().nullish(),
+    postedAt: z.string().datetime().nullish(),
+    appliedVia: z.string().nullish(),
+    recruiterContact: z.string().nullish(),
+    fullJobSpecification: z.string().nullish(),
+    verdict: z.string().nullish(),
+    matchReasons: z.string().nullish(),
+    redFlags: z.string().nullish(),
   })
-  .refine((data) => data.status !== undefined || data.stage !== undefined, {
-    message: "At least one of status or stage is required",
-  });
+  .refine(
+    (data) => Object.entries(data).some(([, v]) => v !== undefined),
+    { message: "At least one field is required" }
+  );
 
 export type CreateOpportunityInput = z.infer<typeof createOpportunitySchema>;
 export type UpdateOpportunityInput = z.infer<typeof updateOpportunitySchema>;
