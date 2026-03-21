@@ -1,6 +1,15 @@
 # Job Scout
 
-Self-hosted job opportunity tracking system. Receives scored job listings from n8n workflows, stores them in PostgreSQL, and exposes them through a Next.js dashboard.
+**Job Scout** is an open-source, self-hosted **API and dashboard** for supporting a serious job search: it stores and organises the leads *you* qualify, instead of trying to own every step of how you find or score jobs.
+
+## What it is (and isn’t)
+
+- **What it is:** A **data store** plus a **web UI** for managing opportunities, applications, disqualified listings, feeds, and prompts. You send structured data in (typically from automation you control); Job Scout persists it and helps you review, track, and act on it.
+- **What it isn’t:** A complete “job hunt in a box.” It does **not** embed your scraping rules, board-specific filters, or scoring brains. Those live **outside** the app—on purpose.
+
+That intentional gap is the point: **bring your own logic** (workflows, scripts, LLMs, whatever fits you). Tools like **[n8n](https://n8n.io/)** are a natural fit: poll or scrape job boards, dedupe, score or classify roles, then **POST** scored **opportunities** or **disqualified** listings straight into the API. You can run **many feeds** with **different strategies** without changing Job Scout’s codebase each time—only your automation changes.
+
+In short: Job Scout is the **stable centre** (storage + management UI); your automation is the **flexible edge** (how each feed finds and judges jobs).
 
 ## Running with Docker
 
@@ -105,12 +114,13 @@ docker compose -f docker-compose.dev.yml up -d --build
 
 ## API endpoints
 
+Typical flow: your automation calls these with `X-API-Key`. Dashboard **feed health** treats the latest **opportunity or disqualified** ingest per configured feed as liveness (no separate heartbeat).
+
 ### n8n-facing (API key via `X-API-Key` header)
+
 - `POST /api/opportunities` — Ingest scored job
 - `POST /api/rejections` — Ingest disqualified job listing (stored as a rejection record; dashboard UI labels this **Disqualified**)
 - `POST /api/seen-ids` — Batch deduplication check
-
-Feed health on the dashboard uses the latest **opportunity or rejection** ingest per configured feed (no separate heartbeat endpoint).
 - `GET /api/prompts/active` — Active scoring prompt (no auth)
 - `POST /api/applications` — Create a manual / external application (`source: manual`, optional `appliedVia`, defaults to `External`)
 - `PATCH /api/applications/:id` — Update application fields, `status`, or `stage` (same rules as opportunity PATCH; archive/reject via `stage`)
