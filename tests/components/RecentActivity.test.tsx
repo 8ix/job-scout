@@ -21,9 +21,9 @@ describe("RecentActivity", () => {
     render(<RecentActivity activity={activity} />);
 
     expect(screen.getByTitle("Opportunities: 3")).toBeInTheDocument();
-    expect(screen.getByTitle("Rejected: 2")).toBeInTheDocument();
+    expect(screen.getByTitle("Disqualified: 2")).toBeInTheDocument();
     expect(screen.getByTitle("Opportunities: 5")).toBeInTheDocument();
-    expect(screen.getByTitle("Rejected: 1")).toBeInTheDocument();
+    expect(screen.getByTitle("Disqualified: 1")).toBeInTheDocument();
     expect(screen.getByText("5 jobs")).toBeInTheDocument();
     expect(screen.getByText("6 jobs")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();

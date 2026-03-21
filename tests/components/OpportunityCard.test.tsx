@@ -48,11 +48,11 @@ describe("OpportunityCard", () => {
     expect(onStatusChange).toHaveBeenCalledWith(defaultOpp.id, "applied");
   });
 
-  it("calls onStatusChange with 'rejected' when reject button is clicked", async () => {
+  it("calls onStatusChange with 'rejected' when disqualify button is clicked", async () => {
     const onStatusChange = vi.fn();
     render(<OpportunityCard opportunity={defaultOpp} onStatusChange={onStatusChange} />);
 
-    const button = screen.getByRole("button", { name: /reject/i });
+    const button = screen.getByRole("button", { name: /disqualify/i });
     await userEvent.click(button);
 
     expect(onStatusChange).toHaveBeenCalledWith(defaultOpp.id, "rejected");
@@ -63,6 +63,6 @@ describe("OpportunityCard", () => {
     render(<OpportunityCard opportunity={appliedOpp} onStatusChange={vi.fn()} />);
 
     expect(screen.queryByRole("button", { name: /applied/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /reject/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /disqualify/i })).not.toBeInTheDocument();
   });
 });

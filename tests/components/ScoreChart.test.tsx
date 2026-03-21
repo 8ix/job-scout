@@ -15,14 +15,14 @@ describe("ScoreChart", () => {
 
   it("renders a bar for each score band", () => {
     const byScore = [
-      { band: "Disqualified", count: 10 },
+      { band: "0–5", count: 10 },
       { band: "6", count: 5 },
       { band: "7", count: 25 },
       { band: "8", count: 40 },
     ];
     render(<ScoreChart byScore={byScore} />);
 
-    expect(screen.getByText("Disqualified")).toBeInTheDocument();
+    expect(screen.getByText("0–5")).toBeInTheDocument();
     expect(screen.getByText("6")).toBeInTheDocument();
     expect(screen.getByText("7")).toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();

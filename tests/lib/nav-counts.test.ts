@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getNavCounts } from "@/lib/nav-counts";
+import { DEFAULT_OPPORTUNITY_SCORE_MIN } from "@/lib/constants/opportunities";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -24,7 +25,7 @@ describe("getNavCounts", () => {
     vi.mocked(prisma.feed.count).mockResolvedValue(0);
   });
 
-  it("returns counts for opportunities (new only), applications, rejections, and feeds", async () => {
+  it("returns counts for opportunities (new + default score min), applications, rejections, and feeds", async () => {
     vi.mocked(prisma.opportunity.count)
       .mockResolvedValueOnce(5)
       .mockResolvedValueOnce(8);
@@ -41,12 +42,12 @@ describe("getNavCounts", () => {
     });
   });
 
-  it("queries opportunities with status new and applications with status applied", async () => {
+  it("queries opportunities with status new, score gte default min, and applications with status applied", async () => {
     vi.clearAllMocks();
     await getNavCounts();
 
     expect(prisma.opportunity.count).toHaveBeenCalledWith({
-      where: { status: "new" },
+      where: { status: "new", score: { gte: DEFAULT_OPPORTUNITY_SCORE_MIN } },
     });
     expect(prisma.opportunity.count).toHaveBeenCalledWith({
       where: { status: "applied" },

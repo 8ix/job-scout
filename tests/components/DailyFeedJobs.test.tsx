@@ -8,7 +8,7 @@ describe("DailyFeedJobs", () => {
     expect(screen.getByText("No feeds configured yet.")).toBeInTheDocument();
   });
 
-  it("renders feed data with opportunities and rejections", () => {
+  it("renders feed data with opportunities and disqualified counts", () => {
     render(
       <DailyFeedJobs
         feeds={[
@@ -20,8 +20,8 @@ describe("DailyFeedJobs", () => {
     expect(screen.getByText("Daily Feed Jobs (24h)")).toBeInTheDocument();
     expect(screen.getByText("Adzuna")).toBeInTheDocument();
     expect(screen.getByText("Reed")).toBeInTheDocument();
-    expect(screen.getByText("10 opps / 5 rejected")).toBeInTheDocument();
-    expect(screen.getByText("2 opps / 15 rejected")).toBeInTheDocument();
+    expect(screen.getByText("10 opps / 5 disqualified")).toBeInTheDocument();
+    expect(screen.getByText("2 opps / 15 disqualified")).toBeInTheDocument();
   });
 
   it("renders last received time when provided", () => {
@@ -41,10 +41,28 @@ describe("DailyFeedJobs", () => {
           ]}
         />
       );
-      expect(screen.getByText(/last received 2 days ago/)).toBeInTheDocument();
-      expect(screen.getByText("13 opps / 59 rejected")).toBeInTheDocument();
+      expect(screen.getByText(/last ingest 2 days ago/)).toBeInTheDocument();
+      expect(screen.getByText("13 opps / 59 disqualified")).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("shows stale warning when no ingest in 24h", () => {
+    render(
+      <DailyFeedJobs
+        feeds={[
+          {
+            source: "QuietFeed",
+            opportunities: 0,
+            rejected: 0,
+            lastReceivedAt: null,
+            stale: true,
+          },
+        ]}
+      />
+    );
+    expect(screen.getByText("No ingest in 24h")).toBeInTheDocument();
+    expect(screen.getByText("(no recorded ingest)")).toBeInTheDocument();
   });
 });

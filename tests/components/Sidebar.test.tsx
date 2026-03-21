@@ -24,7 +24,7 @@ describe("Sidebar", () => {
     expect(screen.getByTestId("nav-dashboard")).toBeInTheDocument();
     expect(screen.getByTestId("nav-opportunities")).toBeInTheDocument();
     expect(screen.getByTestId("nav-applications")).toBeInTheDocument();
-    expect(screen.getByTestId("nav-rejections")).toBeInTheDocument();
+    expect(screen.getByTestId("nav-disqualified")).toBeInTheDocument();
     expect(screen.getByTestId("nav-prompts")).toBeInTheDocument();
     expect(screen.getByTestId("nav-feeds")).toBeInTheDocument();
   });
@@ -45,12 +45,12 @@ describe("Sidebar", () => {
     expect(screen.getByText("Sign out")).toBeInTheDocument();
   });
 
-  it("renders count badges for opportunities, applications, rejections, and feeds", () => {
+  it("renders count badges for opportunities, applications, disqualified, and feeds", () => {
     render(<Sidebar navCounts={defaultNavCounts} />);
 
     expect(screen.getByTestId("nav-opportunities-count")).toHaveTextContent("42");
     expect(screen.getByTestId("nav-applications-count")).toHaveTextContent("5");
-    expect(screen.getByTestId("nav-rejections-count")).toHaveTextContent("12");
+    expect(screen.getByTestId("nav-disqualified-count")).toHaveTextContent("12");
     expect(screen.getByTestId("nav-feeds-count")).toHaveTextContent("3");
   });
 

@@ -37,13 +37,13 @@ export default async function RejectionsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-foreground">Rejections</h2>
+      <h2 className="text-2xl font-bold text-foreground">Disqualified</h2>
       <Suspense fallback={null}>
         <SourceFilter sources={sources} />
       </Suspense>
       {serialized.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <p className="text-muted-foreground">No rejections yet.</p>
+          <p className="text-muted-foreground">No disqualified listings yet.</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

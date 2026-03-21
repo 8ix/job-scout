@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ScheduledEventsPanel } from "./ScheduledEventsPanel";
 import { ContactsPane } from "./ContactsPane";
 import type { PipelineApplication } from "./application-types";
+import { applicationStageLabel } from "@/lib/ui/stage-labels";
 
 interface ApplicationDetailsDialogProps {
   open: boolean;
@@ -84,7 +85,9 @@ export function ApplicationDetailsDialog({
               <ol className="space-y-2 border-l-2 border-border pl-3">
                 {app.stageLogs.map((log) => (
                   <li key={log.id} className="text-sm">
-                    <span className="font-medium text-card-foreground">{log.stage}</span>
+                    <span className="font-medium text-card-foreground">
+                      {applicationStageLabel(log.stage)}
+                    </span>
                     <span className="text-muted-foreground text-xs ml-2">
                       {new Date(log.createdAt).toLocaleString(undefined, {
                         dateStyle: "medium",

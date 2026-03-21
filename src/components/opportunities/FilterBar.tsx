@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
+import { opportunityStatusOptionLabel } from "@/lib/ui/stage-labels";
 
 const statuses = ["All", "new", "reviewed", "applied", "rejected", "archived"];
 const workingModels = ["All", "Remote", "Hybrid", "On-site", "Unknown"];
@@ -54,7 +55,9 @@ export function FilterBar({ sources }: FilterBarProps) {
         aria-label="Filter by status"
       >
         {statuses.map((s) => (
-          <option key={s} value={s}>{s === "All" ? "All Statuses" : s}</option>
+          <option key={s} value={s}>
+            {opportunityStatusOptionLabel(s)}
+          </option>
         ))}
       </select>
 

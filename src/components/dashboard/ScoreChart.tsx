@@ -3,7 +3,7 @@ interface ScoreChartProps {
 }
 
 const bandColors: Record<string, string> = {
-  Disqualified: "bg-danger",
+  "0–5": "bg-danger",
   "6": "bg-warning",
   "7": "bg-warning",
   "8": "bg-success",
@@ -16,7 +16,15 @@ export function ScoreChart({ byScore }: ScoreChartProps) {
 
   return (
     <div className="rounded-xl border border-border bg-card p-6">
-      <h3 className="text-sm font-medium text-muted-foreground mb-4">Score Distribution</h3>
+      <h3 className="text-sm font-medium text-muted-foreground">Score Distribution</h3>
+      <p className="mt-1 mb-4 text-xs text-muted-foreground leading-relaxed">
+        <strong className="font-medium text-foreground/80">Incoming</strong> scores: each job is
+        counted once using the score from ingestion. That includes opportunities in any status (so
+        user-disqualified items stay in their 6–10 band) plus disqualified-only listings that never
+        had an opportunity row. The sidebar <strong className="font-medium text-foreground/80">Disqualified</strong>{" "}
+        count is how many rows exist on the Disqualified page (can overlap this chart when the same
+        job also has an opportunity).
+      </p>
       {byScore.length === 0 ? (
         <p className="text-sm text-muted-foreground">No score data available yet.</p>
       ) : (

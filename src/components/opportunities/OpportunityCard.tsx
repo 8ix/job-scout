@@ -108,10 +108,12 @@ export function OpportunityCard({ opportunity, onStatusChange }: OpportunityCard
               Applied
             </button>
             <button
+              type="button"
               onClick={() => onStatusChange(opp.id, "rejected")}
               className="rounded-lg bg-danger px-3 py-1.5 text-xs font-medium text-white hover:bg-danger/90 transition-colors"
+              aria-label="Disqualify this opportunity"
             >
-              Reject
+              Disqualify
             </button>
           </div>
         )}

@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createOpportunitySchema, updateOpportunitySchema } from "@/lib/validators/opportunity";
 import { createRejectionSchema } from "@/lib/validators/rejection";
-import { createHeartbeatSchema } from "@/lib/validators/heartbeat";
 import { createPromptSchema } from "@/lib/validators/prompt";
 
 describe("createOpportunitySchema", () => {
@@ -89,44 +88,6 @@ describe("createRejectionSchema", () => {
       source: "Reed",
       url: "https://example.com",
       score: 2,
-    });
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("createHeartbeatSchema", () => {
-  it("accepts valid input", () => {
-    const result = createHeartbeatSchema.safeParse({
-      source: "Adzuna",
-      jobsReceived: 50,
-      jobsNew: 10,
-      jobsScored: 10,
-      jobsOpportunity: 3,
-      ranAt: new Date().toISOString(),
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects negative job counts", () => {
-    const result = createHeartbeatSchema.safeParse({
-      source: "Adzuna",
-      jobsReceived: -1,
-      jobsNew: 10,
-      jobsScored: 10,
-      jobsOpportunity: 3,
-      ranAt: new Date().toISOString(),
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects invalid datetime format", () => {
-    const result = createHeartbeatSchema.safeParse({
-      source: "Adzuna",
-      jobsReceived: 50,
-      jobsNew: 10,
-      jobsScored: 10,
-      jobsOpportunity: 3,
-      ranAt: "not-a-date",
     });
     expect(result.success).toBe(false);
   });

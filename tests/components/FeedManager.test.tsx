@@ -45,7 +45,6 @@ describe("FeedManager", () => {
     await userEvent.click(toggleButtons[0]);
     expect(screen.getByText("/api/opportunities")).toBeInTheDocument();
     expect(screen.getByText("/api/rejections")).toBeInTheDocument();
-    expect(screen.getByText("/api/heartbeats")).toBeInTheDocument();
     expect(screen.getByText("/api/seen-ids")).toBeInTheDocument();
     expect(screen.getByText("/api/prompts/active")).toBeInTheDocument();
   });

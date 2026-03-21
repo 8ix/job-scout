@@ -20,20 +20,18 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const [oppCount, rejCount, hbCount] = await Promise.all([
+  const [oppCount, rejCount] = await Promise.all([
     prisma.opportunity.count({ where: { source: feed.name } }),
     prisma.rejection.count({ where: { source: feed.name } }),
-    prisma.feedHeartbeat.count({ where: { source: feed.name } }),
   ]);
 
-  if (oppCount + rejCount + hbCount > 0) {
+  if (oppCount + rejCount > 0) {
     return NextResponse.json(
       {
         error: "Cannot delete feed with associated data",
         counts: {
           opportunities: oppCount,
           rejections: rejCount,
-          heartbeats: hbCount,
         },
       },
       { status: 409 }

@@ -99,8 +99,9 @@ export function MobileOpportunityList({ opportunities }: MobileOpportunityListPr
                   type="button"
                   onClick={() => handleStatusChange(opp.id, "rejected")}
                   className="min-h-11 rounded-lg bg-danger px-4 text-sm font-semibold text-white hover:bg-danger/90 active:scale-[0.98]"
+                  aria-label="Disqualify this opportunity"
                 >
-                  Reject
+                  Disqualify
                 </button>
               </>
             )}

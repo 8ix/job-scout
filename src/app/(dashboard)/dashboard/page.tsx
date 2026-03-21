@@ -1,6 +1,20 @@
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_OPPORTUNITY_SCORE_MIN } from "@/lib/constants/opportunities";
+import { getIncomingScoreDistribution } from "@/lib/stats/incoming-score-distribution";
+import { getSourceQuality } from "@/lib/stats/source-quality";
+import { getOutcomeFunnel } from "@/lib/stats/outcome-funnel";
+import { getPipelineSnapshot } from "@/lib/stats/pipeline-snapshot";
+import { getFeedIngestSummary } from "@/lib/feeds/feed-ingest-summary";
+import {
+  OUTCOME_FUNNEL_WINDOWS_DAYS,
+  SOURCE_QUALITY_WINDOW_DAYS,
+} from "@/lib/constants/dashboard";
+import { SourceQualityTable } from "@/components/dashboard/SourceQualityTable";
+import { OutcomeFunnel } from "@/components/dashboard/OutcomeFunnel";
+import { PipelineSnapshot } from "@/components/dashboard/PipelineSnapshot";
 import { StatsBar } from "@/components/dashboard/StatsBar";
 import { DailyFeedJobs } from "@/components/dashboard/DailyFeedJobs";
+import { FeedStaleAlert } from "@/components/dashboard/FeedStaleAlert";
 import { ScoreChart } from "@/components/dashboard/ScoreChart";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { ReviewFlash } from "@/components/dashboard/ReviewFlash";
@@ -59,7 +73,12 @@ async function getStats() {
     // Cumulative: ever applied (appliedAt set), regardless of later rejection
     prisma.opportunity.count({ where: { appliedAt: { not: null } } }),
     prisma.rejection.count(),
-    prisma.opportunity.count({ where: { status: "new" } }),
+    prisma.opportunity.count({
+      where: {
+        status: "new",
+        score: { gte: DEFAULT_OPPORTUNITY_SCORE_MIN },
+      },
+    }),
     prisma.$queryRaw<DateCountRow[]>`
       SELECT DATE("createdAt")::text as date, COUNT(*)::text as count
       FROM rejections
@@ -78,23 +97,7 @@ async function getStats() {
 
   const conversionRate = totalOpportunities > 0 ? appliedCount / totalOpportunities : 0;
 
-  const scoreBands = [
-    { band: "Disqualified", min: 0, max: 5 },
-    { band: "6", min: 6, max: 6 },
-    { band: "7", min: 7, max: 7 },
-    { band: "8", min: 8, max: 8 },
-    { band: "9", min: 9, max: 9 },
-    { band: "10", min: 10, max: 10 },
-  ];
-
-  const byScore = await Promise.all(
-    scoreBands.map(async ({ band, min, max }) => ({
-      band,
-      count: await prisma.opportunity.count({
-        where: { score: { gte: min, lte: max } },
-      }),
-    }))
-  );
+  const byScore = await getIncomingScoreDistribution(prisma);
 
   const opportunitiesMap = new Map(
     opportunitiesCreatedByDate.map((r) => [r.date, parseInt(r.count, 10)])
@@ -120,67 +123,14 @@ async function getStats() {
 }
 
 async function getDailyFeedJobsData() {
-  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const feeds = await prisma.feed.findMany({ select: { name: true }, orderBy: { name: "asc" } });
-  const sources = feeds.map((f) => f.name);
-
-  const [oppsBySource, rejBySource, lastHeartbeat, lastOppBySource, lastRejBySource] =
-    await Promise.all([
-      prisma.opportunity.groupBy({
-        by: ["source"],
-        _count: { id: true },
-        where: { createdAt: { gte: twentyFourHoursAgo } },
-      }),
-      prisma.rejection.groupBy({
-        by: ["source"],
-        _count: { id: true },
-        where: { createdAt: { gte: twentyFourHoursAgo } },
-      }),
-      sources.length > 0
-        ? prisma.feedHeartbeat.groupBy({
-            by: ["source"],
-            _max: { ranAt: true },
-            where: { source: { in: sources } },
-          })
-        : Promise.resolve([]),
-      sources.length > 0
-        ? prisma.opportunity.groupBy({
-            by: ["source"],
-            _max: { createdAt: true },
-            where: { source: { in: sources } },
-          })
-        : Promise.resolve([]),
-      sources.length > 0
-        ? prisma.rejection.groupBy({
-            by: ["source"],
-            _max: { createdAt: true },
-            where: { source: { in: sources } },
-          })
-        : Promise.resolve([]),
-    ]);
-
-  const oppsMap = new Map(oppsBySource.map((o) => [o.source, o._count.id]));
-  const rejMap = new Map(rejBySource.map((r) => [r.source, r._count.id]));
-  const heartbeatMap = new Map(lastHeartbeat.map((r) => [r.source, r._max.ranAt]));
-  const lastOppMap = new Map(lastOppBySource.map((r) => [r.source, r._max.createdAt]));
-  const lastRejMap = new Map(lastRejBySource.map((r) => [r.source, r._max.createdAt]));
-
-  return sources.map((source) => {
-    const heartbeatAt = heartbeatMap.get(source);
-    const lastOppAt = lastOppMap.get(source);
-    const lastRejAt = lastRejMap.get(source);
-    const fromData = [lastOppAt, lastRejAt].filter((d): d is Date => d != null);
-    const latestFromData =
-      fromData.length > 0 ? new Date(Math.max(...fromData.map((d) => d.getTime()))) : null;
-    const lastReceivedAt = heartbeatAt ?? latestFromData ?? null;
-
-    return {
-      source,
-      opportunities: oppsMap.get(source) ?? 0,
-      rejected: rejMap.get(source) ?? 0,
-      lastReceivedAt,
-    };
-  });
+  const rows = await getFeedIngestSummary(prisma);
+  return rows.map((r) => ({
+    source: r.source,
+    opportunities: r.opportunities24h,
+    rejected: r.disqualified24h,
+    lastReceivedAt: r.lastIngestAt,
+    stale: r.stale,
+  }));
 }
 
 async function getUpcomingScheduledEvents() {
@@ -211,20 +161,40 @@ async function getUpcomingScheduledEvents() {
 }
 
 export default async function DashboardPage() {
-  const [stats, dailyFeedJobs, upcoming] = await Promise.all([
+  const [
+    stats,
+    dailyFeedJobs,
+    upcoming,
+    sourceQuality,
+    funnel7,
+    funnel30,
+    pipeline,
+  ] = await Promise.all([
     getStats(),
     getDailyFeedJobsData(),
     getUpcomingScheduledEvents(),
+    getSourceQuality(prisma),
+    getOutcomeFunnel(prisma, OUTCOME_FUNNEL_WINDOWS_DAYS[0]),
+    getOutcomeFunnel(prisma, OUTCOME_FUNNEL_WINDOWS_DAYS[1]),
+    getPipelineSnapshot(prisma),
   ]);
+
+  const staleFeedSources = dailyFeedJobs.filter((f) => f.stale).map((f) => f.source);
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
+      <FeedStaleAlert staleSources={staleFeedSources} />
       <ReviewFlash count={stats.newOpportunitiesCount} />
       <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,360px)] lg:items-start">
         <StatsBar stats={stats} />
         <UpcomingInterviews events={upcoming} />
       </div>
+      <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-2">
+        <PipelineSnapshot totalActive={pipeline.totalActive} stages={pipeline.stages} />
+        <OutcomeFunnel seven={funnel7} thirty={funnel30} />
+      </div>
+      <SourceQualityTable rows={sourceQuality} windowDays={SOURCE_QUALITY_WINDOW_DAYS} />
       <div className="grid gap-6 lg:grid-cols-2">
         <DailyFeedJobs feeds={dailyFeedJobs} />
         <ScoreChart byScore={stats.byScore} />

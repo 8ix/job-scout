@@ -4,6 +4,7 @@ import { OpportunityList } from "@/components/opportunities/OpportunityList";
 import { FilterBar } from "@/components/opportunities/FilterBar";
 import { Pagination } from "@/components/ui/Pagination";
 import { getValidSources } from "@/lib/validators/source";
+import { DEFAULT_OPPORTUNITY_SCORE_MIN } from "@/lib/constants/opportunities";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,9 @@ export default async function OpportunitiesPage({ searchParams }: PageProps) {
   const limit = 20;
   const status = params.status || "new";
   const source = params.source;
-  const scoreMin = params.score_min ? parseInt(params.score_min) : 6;
+  const scoreMin = params.score_min
+    ? parseInt(params.score_min)
+    : DEFAULT_OPPORTUNITY_SCORE_MIN;
   const workingModel = params.workingModel;
   const listingType = params.listingType;
 

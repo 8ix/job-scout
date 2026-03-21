@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_OPPORTUNITY_SCORE_MIN } from "@/lib/constants/opportunities";
 
 export type NavCounts = {
   opportunities: number;
@@ -9,7 +10,12 @@ export type NavCounts = {
 
 export async function getNavCounts(): Promise<NavCounts> {
   const [opportunities, applications, rejections, feeds] = await Promise.all([
-    prisma.opportunity.count({ where: { status: "new" } }),
+    prisma.opportunity.count({
+      where: {
+        status: "new",
+        score: { gte: DEFAULT_OPPORTUNITY_SCORE_MIN },
+      },
+    }),
     prisma.opportunity.count({ where: { status: "applied" } }),
     prisma.rejection.count(),
     prisma.feed.count(),

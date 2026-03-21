@@ -1,16 +1,14 @@
 import { prisma } from "@/lib/prisma";
+import { getFeedIngestSummary } from "@/lib/feeds/feed-ingest-summary";
 import { FeedHealthTable } from "@/components/feeds/FeedHealthTable";
 import { FeedManager } from "@/components/feeds/FeedManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function FeedsPage() {
-  const [feeds, heartbeats] = await Promise.all([
+  const [feeds, ingestRows] = await Promise.all([
     prisma.feed.findMany({ orderBy: { name: "asc" } }),
-    prisma.feedHeartbeat.findMany({
-      orderBy: { ranAt: "desc" },
-      take: 100,
-    }),
+    getFeedIngestSummary(prisma),
   ]);
 
   const serializedFeeds = feeds.map((f) => ({
@@ -18,9 +16,12 @@ export default async function FeedsPage() {
     createdAt: f.createdAt.toISOString(),
   }));
 
-  const serializedHeartbeats = heartbeats.map((hb) => ({
-    ...hb,
-    ranAt: hb.ranAt.toISOString(),
+  const healthRows = ingestRows.map((r) => ({
+    source: r.source,
+    lastIngestAt: r.lastIngestAt?.toISOString() ?? null,
+    opportunities24h: r.opportunities24h,
+    disqualified24h: r.disqualified24h,
+    stale: r.stale,
   }));
 
   return (
@@ -37,7 +38,7 @@ export default async function FeedsPage() {
 
       <section className="space-y-4">
         <h2 className="text-2xl font-bold text-foreground">Feed Health</h2>
-        <FeedHealthTable heartbeats={serializedHeartbeats} />
+        <FeedHealthTable rows={healthRows} />
       </section>
     </div>
   );

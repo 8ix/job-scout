@@ -47,7 +47,7 @@ export function RecentActivity({ activity }: RecentActivityProps) {
                     height: maxBar > 0 ? `${(day.rejected / maxBar) * BAR_MAX_HEIGHT}px` : "0px",
                     minHeight: day.rejected > 0 ? "4px" : "0px",
                   }}
-                  title={`Rejected: ${day.rejected}`}
+                  title={`Disqualified: ${day.rejected}`}
                 >
                   {day.rejected > 0 && (
                     <span className="text-[9px] font-medium text-white drop-shadow-sm leading-tight">

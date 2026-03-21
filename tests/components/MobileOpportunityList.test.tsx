@@ -34,6 +34,6 @@ describe("MobileOpportunityList", () => {
     expect(screen.getByText("Engineer")).toBeInTheDocument();
     expect(screen.getByText("Acme")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /applied/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /reject/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /disqualify/i })).toBeInTheDocument();
   });
 });

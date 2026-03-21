@@ -20,12 +20,6 @@ export function ApiReference({ feedName }: ApiReferenceProps) {
     },
     {
       method: "POST",
-      path: "/api/heartbeats",
-      auth: "X-API-Key",
-      body: `{ "source": "${feedName}", "jobsReceived": 50, "jobsNew": 10, "jobsScored": 10, "jobsOpportunity": 3, "ranAt": "2026-01-01T00:00:00.000Z" }`,
-    },
-    {
-      method: "POST",
       path: "/api/seen-ids",
       auth: "X-API-Key",
       body: `{ "source": "${feedName}", "ids": ["id1", "id2", "id3"] }`,

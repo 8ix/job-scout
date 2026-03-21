@@ -107,9 +107,10 @@ docker compose -f docker-compose.dev.yml up -d --build
 
 ### n8n-facing (API key via `X-API-Key` header)
 - `POST /api/opportunities` — Ingest scored job
-- `POST /api/rejections` — Ingest rejected job
-- `POST /api/heartbeats` — Pipeline heartbeat
+- `POST /api/rejections` — Ingest disqualified job listing (stored as a rejection record; dashboard UI labels this **Disqualified**)
 - `POST /api/seen-ids` — Batch deduplication check
+
+Feed health on the dashboard uses the latest **opportunity or rejection** ingest per configured feed (no separate heartbeat endpoint).
 - `GET /api/prompts/active` — Active scoring prompt (no auth)
 - `POST /api/applications` — Create a manual / external application (`source: manual`, optional `appliedVia`, defaults to `External`)
 - `PATCH /api/applications/:id` — Update application fields, `status`, or `stage` (same rules as opportunity PATCH; archive/reject via `stage`)
@@ -122,6 +123,6 @@ Session **or** API key: `POST/PATCH/DELETE` on `/api/applications*` accept eithe
 
 ### Dashboard (session auth)
 - `GET /api/opportunities`, `PATCH /api/opportunities/:id` (includes enrichment: `appliedVia`, `recruiterContact`, `fullJobSpecification`, etc.)
-- `GET /api/rejections`
+- `GET /api/rejections` (same data as the **Disqualified** page in the UI)
 - `GET /api/prompts`, `POST /api/prompts`, `PATCH /api/prompts/:id/activate`
 - `GET /api/stats`, `GET /api/health`

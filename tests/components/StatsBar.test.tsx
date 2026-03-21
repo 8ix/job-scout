@@ -23,7 +23,7 @@ describe("StatsBar", () => {
     render(<StatsBar stats={stats} />);
 
     expect(screen.getByText("Opportunities")).toBeInTheDocument();
-    expect(screen.getByText("Rejections")).toBeInTheDocument();
+    expect(screen.getByText("Disqualified")).toBeInTheDocument();
     expect(screen.getByText("Applied")).toBeInTheDocument();
     expect(screen.getByText("% Applied")).toBeInTheDocument();
   });

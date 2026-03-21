@@ -1,5 +1,7 @@
 "use client";
 
+import { applicationStageLabel } from "@/lib/ui/stage-labels";
+
 const STAGES = ["Applied", "Screening", "Interview", "Final Round", "Offer", "Rejected", "Archived"] as const;
 
 interface StageDropdownProps {
@@ -28,7 +30,7 @@ export function StageDropdown({ opportunityId, value, onUpdated }: StageDropdown
     >
       {STAGES.map((s) => (
         <option key={s} value={s}>
-          {s}
+          {applicationStageLabel(s)}
         </option>
       ))}
     </select>

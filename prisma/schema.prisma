@@ -114,19 +114,6 @@ model SystemPrompt {
   @@map("system_prompts")
 }
 
-model FeedHeartbeat {
-  id               String   @id @default(uuid())
-  source           String
-  jobsReceived     Int
-  jobsNew          Int
-  jobsScored       Int
-  jobsOpportunity  Int
-  ranAt            DateTime
-
-  @@index([ranAt(sort: Desc)])
-  @@map("feed_heartbeats")
-}
-
 model Feed {
   id        String   @id @default(uuid())
   name      String   @unique

@@ -26,12 +26,6 @@ export const prismaMock = {
     updateMany: vi.fn(),
     deleteMany: vi.fn(),
   },
-  feedHeartbeat: {
-    create: vi.fn(),
-    findMany: vi.fn(),
-    count: vi.fn(),
-    deleteMany: vi.fn(),
-  },
   feed: {
     create: vi.fn(),
     findUnique: vi.fn(),

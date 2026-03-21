@@ -55,19 +55,6 @@ export function buildSystemPrompt(overrides: Record<string, unknown> = {}) {
   };
 }
 
-export function buildFeedHeartbeat(overrides: Record<string, unknown> = {}) {
-  return {
-    id: randomUUID(),
-    source: "Adzuna",
-    jobsReceived: 50,
-    jobsNew: 10,
-    jobsScored: 10,
-    jobsOpportunity: 3,
-    ranAt: new Date(),
-    ...overrides,
-  };
-}
-
 export function buildApplicationContact(overrides: Record<string, unknown> = {}) {
   return {
     id: randomUUID(),

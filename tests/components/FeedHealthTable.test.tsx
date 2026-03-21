@@ -1,36 +1,61 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { FeedHealthTable } from "@/components/feeds/FeedHealthTable";
-import { buildFeedHeartbeat } from "../helpers/factories";
 
 describe("FeedHealthTable", () => {
-  it("renders a row for each heartbeat", () => {
-    const heartbeats = [
-      buildFeedHeartbeat({ source: "Adzuna", jobsReceived: 50, jobsNew: 10, jobsScored: 8, jobsOpportunity: 3 }),
-      buildFeedHeartbeat({ source: "Reed", jobsReceived: 30, jobsNew: 5, jobsScored: 4, jobsOpportunity: 1 }),
-    ];
-
-    render(<FeedHealthTable heartbeats={heartbeats} />);
+  it("renders a row per feed with counts", () => {
+    render(
+      <FeedHealthTable
+        rows={[
+          {
+            source: "Adzuna",
+            lastIngestAt: "2026-03-17T12:00:00.000Z",
+            opportunities24h: 10,
+            disqualified24h: 2,
+            stale: false,
+          },
+          {
+            source: "Reed",
+            lastIngestAt: null,
+            opportunities24h: 0,
+            disqualified24h: 0,
+            stale: true,
+          },
+        ]}
+      />
+    );
 
     expect(screen.getByText("Adzuna")).toBeInTheDocument();
     expect(screen.getByText("Reed")).toBeInTheDocument();
-    expect(screen.getByText("50")).toBeInTheDocument();
-    expect(screen.getByText("30")).toBeInTheDocument();
+    expect(screen.getByText("10")).toBeInTheDocument();
+    expect(screen.getByText("OK")).toBeInTheDocument();
+    expect(screen.getByText("Check pipeline")).toBeInTheDocument();
   });
 
   it("shows column headers", () => {
-    render(<FeedHealthTable heartbeats={[buildFeedHeartbeat()]} />);
+    render(
+      <FeedHealthTable
+        rows={[
+          {
+            source: "Adzuna",
+            lastIngestAt: null,
+            opportunities24h: 0,
+            disqualified24h: 0,
+            stale: true,
+          },
+        ]}
+      />
+    );
 
-    expect(screen.getByText("Source")).toBeInTheDocument();
-    expect(screen.getByText("Received")).toBeInTheDocument();
-    expect(screen.getByText("New")).toBeInTheDocument();
-    expect(screen.getByText("Scored")).toBeInTheDocument();
-    expect(screen.getByText("Opportunities")).toBeInTheDocument();
-    expect(screen.getByText("Ran At")).toBeInTheDocument();
+    expect(screen.getByText("Feed")).toBeInTheDocument();
+    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Opps (24h)")).toBeInTheDocument();
+    expect(screen.getByText("Disqualified (24h)")).toBeInTheDocument();
+    expect(screen.getByText("Last ingest")).toBeInTheDocument();
   });
 
-  it("shows empty state when no heartbeats", () => {
-    render(<FeedHealthTable heartbeats={[]} />);
-    expect(screen.getByText(/no heartbeat data/i)).toBeInTheDocument();
+  it("shows empty state when no feeds", () => {
+    render(<FeedHealthTable rows={[]} />);
+    expect(screen.getByText(/no feeds configured yet/i)).toBeInTheDocument();
   });
 });

@@ -132,7 +132,6 @@ describe("DELETE /api/feeds/:id", () => {
     });
     prismaMock.opportunity.count.mockResolvedValue(0);
     prismaMock.rejection.count.mockResolvedValue(0);
-    prismaMock.feedHeartbeat.count.mockResolvedValue(0);
     prismaMock.feed.delete.mockResolvedValue({});
 
     const { DELETE } = await import("@/app/api/feeds/[id]/route");
@@ -152,7 +151,6 @@ describe("DELETE /api/feeds/:id", () => {
     });
     prismaMock.opportunity.count.mockResolvedValue(5);
     prismaMock.rejection.count.mockResolvedValue(0);
-    prismaMock.feedHeartbeat.count.mockResolvedValue(0);
 
     const { DELETE } = await import("@/app/api/feeds/[id]/route");
     const request = new Request("http://localhost/api/feeds/f1", {
