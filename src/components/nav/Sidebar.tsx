@@ -23,15 +23,15 @@ export function Sidebar({ navCounts }: SidebarProps) {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-border bg-card">
-      <div className="flex h-16 items-center border-b border-border px-4">
+      <div className="flex h-20 items-center border-b border-border px-4">
         <Link href="/dashboard" className="flex items-center gap-3 min-w-0">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset in /public */}
           <img
             src="/brand-mini-owl.png"
             alt=""
-            width={36}
-            height={36}
-            className="h-9 w-9 shrink-0 object-contain"
+            width={72}
+            height={72}
+            className="h-[72px] w-[72px] shrink-0 object-contain"
           />
           <h1 className="text-xl font-bold text-foreground truncate">Job Scout</h1>
         </Link>
