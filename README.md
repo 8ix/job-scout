@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/job-scout-logo.png" alt="Job Scout logo — owl scout with magnifying glass and briefcase" width="320" />
+</p>
+
 # Job Scout
 
 **Job Scout** is an open-source, self-hosted **API and dashboard** for supporting a serious job search: it stores and organises the leads *you* qualify, instead of trying to own every step of how you find or score jobs.
