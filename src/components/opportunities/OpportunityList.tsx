@@ -12,7 +12,7 @@ interface Opportunity {
   verdict: string | null;
   matchReasons: string | null;
   redFlags: string | null;
-  url: string;
+  url: string | null;
   source: string;
   workingModel: string | null;
   listingType: string | null;

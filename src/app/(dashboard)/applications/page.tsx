@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ApplicationsPipeline } from "@/components/applications/ApplicationsPipeline";
+import { ApplicationsCsvImport } from "@/components/applications/ApplicationsCsvImport";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +103,7 @@ export default async function ApplicationsPage() {
           Add application
         </Link>
       </div>
+      <ApplicationsCsvImport />
       {applications.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-12 text-center space-y-3">
           <p className="text-muted-foreground">

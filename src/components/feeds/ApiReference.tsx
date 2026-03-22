@@ -37,6 +37,10 @@ export function ApiReference({ feedName }: ApiReferenceProps) {
       <p className="text-sm font-medium text-card-foreground">
         n8n Workflow Endpoints for &ldquo;{feedName}&rdquo;
       </p>
+      <p className="text-xs text-muted-foreground">
+        For applications, scheduled calls, and other routes, see{" "}
+        <code className="text-card-foreground">README.md</code> → API endpoints.
+      </p>
       {endpoints.map((ep) => (
         <div key={ep.path} className="space-y-1">
           <div className="flex items-center gap-2">

@@ -18,7 +18,7 @@ export interface PipelineApplication {
   id: string;
   title: string;
   company: string;
-  url: string;
+  url: string | null;
   source: string;
   score: number;
   appliedAt: string | null;

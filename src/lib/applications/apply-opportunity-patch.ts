@@ -1,6 +1,7 @@
 import type { Opportunity } from "@/generated/prisma/client";
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { UpdateOpportunityInput } from "@/lib/validators/opportunity";
+import { MISSING_LISTING_URL_PLACEHOLDER } from "@/lib/constants/missing-listing-url";
 
 type Result =
   | { ok: true; opportunity: Opportunity }
@@ -19,7 +20,7 @@ export async function applyOpportunityPatch(
 
   if (parsed.title !== undefined) data.title = parsed.title;
   if (parsed.company !== undefined) data.company = parsed.company;
-  if (parsed.url !== undefined) data.url = parsed.url;
+  if (parsed.url !== undefined) data.url = parsed.url ?? null;
   if (parsed.score !== undefined) data.score = parsed.score;
   if (parsed.location !== undefined) data.location = parsed.location;
   if (parsed.workingModel !== undefined) data.workingModel = parsed.workingModel;
@@ -99,7 +100,7 @@ export async function applyOpportunityPatch(
         source: existing.source,
         title: existing.title,
         company: existing.company,
-        url: existing.url,
+        url: existing.url ?? MISSING_LISTING_URL_PLACEHOLDER,
         score: existing.score,
         redFlags,
       },

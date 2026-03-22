@@ -69,10 +69,11 @@ export function ManualApplicationForm({
     setSubmitting(true);
     try {
       const av = values.appliedVia.trim();
+      const urlTrim = values.url.trim();
       const base: Record<string, unknown> = {
         title: values.title.trim(),
         company: values.company.trim(),
-        url: values.url.trim(),
+        url: urlTrim === "" ? null : urlTrim,
         score: values.score,
         description: values.description.trim() || null,
         recruiterContact: values.recruiterContact.trim() || null,
@@ -149,14 +150,18 @@ export function ManualApplicationForm({
             onChange={(e) => update("company", e.target.value)}
           />
         </label>
-        <label className="space-y-1">
-          <span className="text-sm font-medium">Listing URL *</span>
+        <label className="space-y-1 sm:col-span-2">
+          <span className="text-sm font-medium">Listing URL</span>
           <input
-            required
+            type="url"
+            placeholder="https://… (optional)"
             className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
             value={values.url}
             onChange={(e) => update("url", e.target.value)}
           />
+          <span className="text-xs text-muted-foreground">
+            Optional for manual entries and CSV imports—add later if you don&apos;t have the posting link.
+          </span>
         </label>
         <label className="space-y-1">
           <span className="text-sm font-medium">Score (0–10) *</span>

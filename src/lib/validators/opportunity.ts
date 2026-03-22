@@ -39,7 +39,18 @@ export const updateOpportunitySchema = z
     stage: applicationStageEnum.optional(),
     title: z.string().min(1).optional(),
     company: z.string().min(1).optional(),
-    url: z.string().min(1).optional(),
+    url: z
+    .union([z.string(), z.null(), z.undefined()])
+    .optional()
+    .transform((v) => {
+      if (v === undefined) return undefined;
+      if (v === null) return null;
+      const t = String(v).trim();
+      return t === "" ? null : t;
+    })
+    .refine((v) => v === undefined || v === null || /^https?:\/\/.+/i.test(v), {
+      message: "Invalid listing URL",
+    }),
     score: z.number().int().min(0).max(10).optional(),
     location: z.string().nullish(),
     workingModel: workingModelEnum.nullish(),

@@ -4,7 +4,7 @@ import { OPPORTUNITY_SCORE_DISTRIBUTION_BANDS } from "@/lib/constants/opportunit
 type ScoreCountRow = { score: number; count: bigint };
 
 /**
- * Fold per-score counts into dashboard/API bands (0–5, 6, …, 10).
+ * Fold per-score counts into dashboard/API bands (6 … 10 only; see `OPPORTUNITY_SCORE_DISTRIBUTION_BANDS`).
  */
 export function bucketHistogramIntoBands(
   histogram: Map<number, number>

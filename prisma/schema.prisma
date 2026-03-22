@@ -22,7 +22,7 @@ model Opportunity {
   verdict      String?
   matchReasons String?
   redFlags     String?
-  url          String
+  url          String?
   description  String?
   status       String    @default("new")
   appliedAt    DateTime?

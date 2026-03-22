@@ -51,6 +51,8 @@ export const config = {
     "/rejections/:path*",
     "/prompts/:path*",
     "/feeds/:path*",
+    "/about",
+    "/about/:path*",
     "/cv/:path*",
   ],
 };

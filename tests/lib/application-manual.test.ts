@@ -15,6 +15,24 @@ describe("createManualApplicationSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("accepts omitted or null url", () => {
+    const a = createManualApplicationSchema.safeParse({
+      title: "Engineer",
+      company: "Acme",
+      score: 6,
+    });
+    expect(a.success).toBe(true);
+    if (a.success) expect(a.data.url).toBeNull();
+
+    const b = createManualApplicationSchema.safeParse({
+      title: "Engineer",
+      company: "Acme",
+      url: null,
+      score: 6,
+    });
+    expect(b.success).toBe(true);
+  });
+
   it("rejects invalid score", () => {
     const parsed = createManualApplicationSchema.safeParse({
       title: "E",

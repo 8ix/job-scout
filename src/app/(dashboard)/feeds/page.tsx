@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getFeedIngestSummary } from "@/lib/feeds/feed-ingest-summary";
 import { FeedHealthTable } from "@/components/feeds/FeedHealthTable";
 import { FeedManager } from "@/components/feeds/FeedManager";
+import { FeedsApiOverview } from "@/components/feeds/FeedsApiOverview";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +30,12 @@ export default async function FeedsPage() {
       <section className="space-y-4">
         <h2 className="text-2xl font-bold text-foreground">Feeds</h2>
         <p className="text-sm text-muted-foreground">
-          Manage your data sources. Each feed represents an n8n workflow that pushes
-          job data into Job Scout. Click &ldquo;API Reference&rdquo; to see the endpoints
-          for your workflow.
+          Manage your data sources. Each feed represents a workflow (e.g. n8n) that pushes job data
+          into Job Scout. Use the API overview below for setup, then expand{" "}
+          <strong className="text-foreground/80">API Reference</strong> on a feed for copy-paste
+          examples with that feed&apos;s <code className="text-xs">source</code> name.
         </p>
+        <FeedsApiOverview />
         <FeedManager feeds={serializedFeeds} />
       </section>
 

@@ -25,6 +25,10 @@
 *.pem
 *.docx
 
+# Personal job-hunt exports (never commit real application spreadsheets)
+*Job Applications*.csv
+*job-applications*.csv
+
 # debug
 npm-debug.log*
 yarn-debug.log*

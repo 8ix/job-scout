@@ -1,13 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_OPPORTUNITY_SCORE_MIN } from "@/lib/constants/opportunities";
+import {
+  getApplyToFirstCallStats,
+  getReviewQueueBreakdown,
+  getRollingConversionBySource,
+  getStuckNewCount,
+} from "@/lib/stats/dashboard-review-metrics";
 import { getIncomingScoreDistribution } from "@/lib/stats/incoming-score-distribution";
 import { getSourceQuality } from "@/lib/stats/source-quality";
 import { getOutcomeFunnel } from "@/lib/stats/outcome-funnel";
 import { getPipelineSnapshot } from "@/lib/stats/pipeline-snapshot";
 import { getFeedIngestSummary } from "@/lib/feeds/feed-ingest-summary";
+import { excludeManualSource } from "@/lib/feeds/exclude-manual-source";
 import {
+  CONVERSION_COHORT_WINDOW_DAYS,
+  FIRST_CALL_MEDIAN_WINDOW_DAYS,
   OUTCOME_FUNNEL_WINDOWS_DAYS,
   SOURCE_QUALITY_WINDOW_DAYS,
+  STUCK_NEW_DAYS,
 } from "@/lib/constants/dashboard";
 import { SourceQualityTable } from "@/components/dashboard/SourceQualityTable";
 import { OutcomeFunnel } from "@/components/dashboard/OutcomeFunnel";
@@ -19,6 +29,10 @@ import { ScoreChart } from "@/components/dashboard/ScoreChart";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { ReviewFlash } from "@/components/dashboard/ReviewFlash";
 import { UpcomingInterviews } from "@/components/dashboard/UpcomingInterviews";
+import { NextActionsStrip } from "@/components/dashboard/NextActionsStrip";
+import { ReviewQueueBreakdown } from "@/components/dashboard/ReviewQueueBreakdown";
+import { ConversionBySourceCard } from "@/components/dashboard/ConversionBySourceCard";
+import { ApplyToFirstCallCard } from "@/components/dashboard/ApplyToFirstCallCard";
 
 export const dynamic = "force-dynamic";
 
@@ -124,13 +138,14 @@ async function getStats() {
 
 async function getDailyFeedJobsData() {
   const rows = await getFeedIngestSummary(prisma);
-  return rows.map((r) => ({
+  const mapped = rows.map((r) => ({
     source: r.source,
     opportunities: r.opportunities24h,
     rejected: r.disqualified24h,
     lastReceivedAt: r.lastIngestAt,
     stale: r.stale,
   }));
+  return excludeManualSource(mapped);
 }
 
 async function getUpcomingScheduledEvents() {
@@ -169,6 +184,10 @@ export default async function DashboardPage() {
     funnel7,
     funnel30,
     pipeline,
+    stuckNew,
+    reviewBreakdown,
+    conversionBySource,
+    applyToFirstCall,
   ] = await Promise.all([
     getStats(),
     getDailyFeedJobsData(),
@@ -177,6 +196,15 @@ export default async function DashboardPage() {
     getOutcomeFunnel(prisma, OUTCOME_FUNNEL_WINDOWS_DAYS[0]),
     getOutcomeFunnel(prisma, OUTCOME_FUNNEL_WINDOWS_DAYS[1]),
     getPipelineSnapshot(prisma),
+    getStuckNewCount(prisma, {
+      stuckDays: STUCK_NEW_DAYS,
+      scoreMin: DEFAULT_OPPORTUNITY_SCORE_MIN,
+    }),
+    getReviewQueueBreakdown(prisma, { scoreMin: DEFAULT_OPPORTUNITY_SCORE_MIN }),
+    getRollingConversionBySource(prisma, {
+      windowDays: CONVERSION_COHORT_WINDOW_DAYS,
+    }),
+    getApplyToFirstCallStats(prisma, { windowDays: FIRST_CALL_MEDIAN_WINDOW_DAYS }),
   ]);
 
   const staleFeedSources = dailyFeedJobs.filter((f) => f.stale).map((f) => f.source);
@@ -186,13 +214,31 @@ export default async function DashboardPage() {
       <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
       <FeedStaleAlert staleSources={staleFeedSources} />
       <ReviewFlash count={stats.newOpportunitiesCount} />
+      <NextActionsStrip
+        toReview={stats.newOpportunitiesCount}
+        stuckNew={stuckNew}
+        staleFeedCount={staleFeedSources.length}
+        upcomingInterviewCount={upcoming.length}
+        activeApplications={pipeline.totalActive}
+      />
       <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,360px)] lg:items-start">
         <StatsBar stats={stats} />
         <UpcomingInterviews events={upcoming} />
       </div>
       <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-2">
+        <ReviewQueueBreakdown
+          byVerdict={reviewBreakdown.byVerdict}
+          byScore={reviewBreakdown.byScore}
+        />
+        <ConversionBySourceCard
+          rows={conversionBySource}
+          windowDays={CONVERSION_COHORT_WINDOW_DAYS}
+        />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-3">
         <PipelineSnapshot totalActive={pipeline.totalActive} stages={pipeline.stages} />
         <OutcomeFunnel seven={funnel7} thirty={funnel30} />
+        <ApplyToFirstCallCard stats={applyToFirstCall} />
       </div>
       <SourceQualityTable rows={sourceQuality} windowDays={SOURCE_QUALITY_WINDOW_DAYS} />
       <div className="grid gap-6 lg:grid-cols-2">

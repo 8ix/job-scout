@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { opportunityStatusOptionLabel } from "@/lib/ui/stage-labels";
 
 const statuses = ["All", "new", "reviewed", "applied", "rejected", "archived"];
@@ -35,7 +36,17 @@ export function FilterBar({ sources }: FilterBarProps) {
     router.push(`/opportunities?${createQueryString(name, value)}`);
   }
 
+  const hrefWithoutMinAge = useMemo(() => {
+    if (!searchParams.get("min_age_days")) return null;
+    const p = new URLSearchParams(searchParams.toString());
+    p.delete("min_age_days");
+    p.set("page", "1");
+    const q = p.toString();
+    return q ? `/opportunities?${q}` : "/opportunities";
+  }, [searchParams]);
+
   return (
+    <div className="flex flex-col gap-3">
     <div className="flex flex-wrap gap-3">
       <select
         value={searchParams.get("source") || "All"}
@@ -93,6 +104,15 @@ export function FilterBar({ sources }: FilterBarProps) {
         className="w-24 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-card-foreground"
         aria-label="Minimum score"
       />
+    </div>
+    {hrefWithoutMinAge && (
+      <p className="text-xs text-muted-foreground">
+        Showing opportunities at least {searchParams.get("min_age_days")} days old.{" "}
+        <Link href={hrefWithoutMinAge} className="font-medium text-primary hover:underline">
+          Clear age filter
+        </Link>
+      </p>
+    )}
     </div>
   );
 }

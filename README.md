@@ -2,6 +2,14 @@
 
 **Job Scout** is an open-source, self-hosted **API and dashboard** for supporting a serious job search: it stores and organises the leads *you* qualify, instead of trying to own every step of how you find or score jobs.
 
+## Philosophy
+
+Job Scout is **intentionally logic-agnostic**. It has no opinions about how jobs should be scored or filtered—that is entirely up to you.
+
+The screening and filtering logic lives in **your** automation (n8n workflows or whatever orchestration tool you prefer). Job Scout’s job is purely to **receive, store, and present** the results. That keeps the project **clean and composable**: different feeds can use different scoring strategies without that complexity living inside the application.
+
+This follows a **headless / composable architecture** pattern: Job Scout is the **data and presentation layer**; **you bring the intelligence**. The in-app **About this project** page and the **Feeds** page (API overview + per-feed examples) are the fastest way to wire up workflows after deploy.
+
 ## What it is (and isn’t)
 
 - **What it is:** A **data store** plus a **web UI** for managing opportunities, applications, disqualified listings, feeds, and prompts. You send structured data in (typically from automation you control); Job Scout persists it and helps you review, track, and act on it.
@@ -122,7 +130,7 @@ Typical flow: your automation calls these with `X-API-Key`. Dashboard **feed hea
 - `POST /api/rejections` — Ingest disqualified job listing (stored as a rejection record; dashboard UI labels this **Disqualified**)
 - `POST /api/seen-ids` — Batch deduplication check
 - `GET /api/prompts/active` — Active scoring prompt (no auth)
-- `POST /api/applications` — Create a manual / external application (`source: manual`, optional `appliedVia`, defaults to `External`)
+- `POST /api/applications` — Create a manual / external application (`source: manual`, optional `appliedVia`, defaults to `External`; `url` is optional—omit or `null` if you have no posting link)
 - `PATCH /api/applications/:id` — Update application fields, `status`, or `stage` (same rules as opportunity PATCH; archive/reject via `stage`)
 - `GET /api/applications/:id` — Single application with contacts, stage logs, scheduled events
 - `POST /api/applications/:id/events` — Add screening / interview (`kind`, `scheduledAt`, optional `notes`)
@@ -131,8 +139,13 @@ Typical flow: your automation calls these with `X-API-Key`. Dashboard **feed hea
 
 Session **or** API key: `POST/PATCH/DELETE` on `/api/applications*` accept either a logged-in dashboard session or `X-API-Key`.
 
+### CSV import (dashboard session only)
+
+- **Template:** download [`/applications-import-template.csv`](/applications-import-template.csv) from your deployed app (or copy from `public/applications-import-template.csv` in the repo).
+- **`POST /api/applications/import`** — `multipart/form-data` with a field named `file` (`.csv`). Creates manual applications on **this** instance. Response: `{ created, skipped, truncated, errors: [{ row, message }] }`. Rows with the same `external_id` as a previous import are **skipped** (dedupe via `jobId`). Spreadsheet columns **Status**, **Interview Date**, and **Last Updated** are ignored; every imported row starts in stage **Applied**. Max row count is enforced (see `MAX_CSV_IMPORT_ROWS` in code).
+
 ### Dashboard (session auth)
 - `GET /api/opportunities`, `PATCH /api/opportunities/:id` (includes enrichment: `appliedVia`, `recruiterContact`, `fullJobSpecification`, etc.)
 - `GET /api/rejections` (same data as the **Disqualified** page in the UI)
 - `GET /api/prompts`, `POST /api/prompts`, `PATCH /api/prompts/:id/activate`
-- `GET /api/stats`, `GET /api/health`
+- `GET /api/stats` (includes `byScore` bands for scores **6–10** only; scores ≤5 are omitted from that histogram—see dashboard **Score distribution** disclaimer), `GET /api/health`

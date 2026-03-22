@@ -52,7 +52,6 @@ describe("GET /api/stats", () => {
     expect(body.conversionRate).toBeCloseTo(0.15);
     expect(body.bySource).toHaveLength(2);
     expect(body.byScore).toEqual([
-      { band: "0–5", count: 20 },
       { band: "6", count: 10 },
       { band: "7", count: 15 },
       { band: "8", count: 25 },
@@ -82,7 +81,6 @@ describe("GET /api/stats", () => {
     expect(body.conversionRate).toBe(0);
     expect(body.bySource).toEqual([]);
     expect(body.byScore).toEqual([
-      { band: "0–5", count: 0 },
       { band: "6", count: 0 },
       { band: "7", count: 0 },
       { band: "8", count: 0 },

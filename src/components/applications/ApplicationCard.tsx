@@ -121,14 +121,20 @@ export function ApplicationCard({ app, band, onOpenDetails }: ApplicationCardPro
         >
           Edit
         </Link>
-        <a
-          href={app.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-        >
-          Listing
-        </a>
+        {app.url ? (
+          <a
+            href={app.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+          >
+            Listing
+          </a>
+        ) : (
+          <span className="rounded-lg border border-dashed border-border px-3 py-1.5 text-xs text-muted-foreground">
+            No listing URL
+          </span>
+        )}
       </div>
     </article>
   );

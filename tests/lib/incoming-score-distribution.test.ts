@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { bucketHistogramIntoBands } from "@/lib/stats/incoming-score-distribution";
 
 describe("bucketHistogramIntoBands", () => {
-  it("maps per-score counts into 0–5 and single-score bands", () => {
+  it("maps per-score counts into single-score bands 6–10 (ignores 0–5 in output)", () => {
     const histogram = new Map<number, number>([
       [2, 5],
       [4, 3],
@@ -11,7 +11,6 @@ describe("bucketHistogramIntoBands", () => {
     ]);
     const bands = bucketHistogramIntoBands(histogram);
     expect(bands).toEqual([
-      { band: "0–5", count: 8 },
       { band: "6", count: 10 },
       { band: "7", count: 0 },
       { band: "8", count: 7 },
@@ -23,6 +22,6 @@ describe("bucketHistogramIntoBands", () => {
   it("returns zeros for empty histogram", () => {
     const bands = bucketHistogramIntoBands(new Map());
     expect(bands.every((b) => b.count === 0)).toBe(true);
-    expect(bands).toHaveLength(6);
+    expect(bands).toHaveLength(5);
   });
 });

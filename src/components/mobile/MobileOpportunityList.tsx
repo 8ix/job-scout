@@ -9,7 +9,7 @@ interface Opportunity {
   location: string | null;
   score: number;
   verdict: string | null;
-  url: string;
+  url: string | null;
   source: string;
   status: string;
 }
@@ -78,14 +78,20 @@ export function MobileOpportunityList({ opportunities }: MobileOpportunityListPr
           )}
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <a
-              href={opp.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex min-h-11 items-center justify-center rounded-lg border border-primary bg-transparent px-4 text-sm font-semibold text-primary hover:bg-primary/10"
-            >
-              View listing
-            </a>
+            {opp.url ? (
+              <a
+                href={opp.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-11 items-center justify-center rounded-lg border border-primary bg-transparent px-4 text-sm font-semibold text-primary hover:bg-primary/10"
+              >
+                View listing
+              </a>
+            ) : (
+              <span className="flex min-h-11 items-center justify-center rounded-lg border border-dashed border-border px-4 text-sm text-muted-foreground">
+                No listing URL
+              </span>
+            )}
             {opp.status === "new" && (
               <>
                 <button

@@ -11,7 +11,7 @@ interface Opportunity {
   verdict: string | null;
   matchReasons: string | null;
   redFlags: string | null;
-  url: string;
+  url: string | null;
   source: string;
   workingModel: string | null;
   listingType: string | null;
@@ -84,14 +84,18 @@ export function OpportunityCard({ opportunity, onStatusChange }: OpportunityCard
 
       <div className="flex items-center justify-between pt-2 border-t border-border flex-wrap gap-2">
         <div className="flex gap-3">
-          <a
-            href={opp.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            View listing
-          </a>
+          {opp.url ? (
+            <a
+              href={opp.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              View listing
+            </a>
+          ) : (
+            <span className="text-sm text-muted-foreground">No listing URL</span>
+          )}
           <Link
             href={`/opportunities/${opp.id}/edit`}
             className="text-sm font-medium text-muted-foreground hover:text-foreground hover:underline"

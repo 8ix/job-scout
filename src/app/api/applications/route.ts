@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       verdict: null,
       matchReasons: null,
       redFlags: null,
-      url: d.url,
+      url: d.url ?? null,
       description: d.description ?? null,
       status: "applied",
       appliedAt: new Date(),

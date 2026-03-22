@@ -13,21 +13,22 @@ describe("ScoreChart", () => {
     expect(screen.getByText("Score Distribution")).toBeInTheDocument();
   });
 
-  it("renders a bar for each score band", () => {
+  it("renders a bar for each score band (6–10)", () => {
     const byScore = [
-      { band: "0–5", count: 10 },
       { band: "6", count: 5 },
       { band: "7", count: 25 },
       { band: "8", count: 40 },
+      { band: "9", count: 0 },
+      { band: "10", count: 0 },
     ];
     render(<ScoreChart byScore={byScore} />);
 
-    expect(screen.getByText("0–5")).toBeInTheDocument();
     expect(screen.getByText("6")).toBeInTheDocument();
     expect(screen.getByText("7")).toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();
     expect(screen.getByText("10")).toBeInTheDocument();
     expect(screen.getByText("25")).toBeInTheDocument();
     expect(screen.getByText("40")).toBeInTheDocument();
+    expect(screen.getByText(/5 or below/i)).toBeInTheDocument();
   });
 });

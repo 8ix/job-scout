@@ -32,7 +32,7 @@ export default async function EditOpportunityPage({ params }: PageProps) {
         initial={{
           title: opp.title,
           company: opp.company,
-          url: opp.url,
+          url: opp.url ?? "",
           score: opp.score,
           location: opp.location ?? "",
           workingModel: opp.workingModel ?? "",

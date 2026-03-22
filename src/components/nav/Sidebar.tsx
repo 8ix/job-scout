@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import type { NavCounts } from "@/lib/nav-counts";
 
 const navItems = [
+  { href: "/about", label: "About this project", icon: "ℹ️", countKey: null as keyof NavCounts | null },
   { href: "/dashboard", label: "Dashboard", icon: "📊", countKey: null as keyof NavCounts | null },
   { href: "/opportunities", label: "Opportunities", icon: "💼", countKey: "opportunities" as const },
   { href: "/applications", label: "Applications", icon: "📋", countKey: "applications" as const },

@@ -5,6 +5,10 @@ import { FilterBar } from "@/components/opportunities/FilterBar";
 import { Pagination } from "@/components/ui/Pagination";
 import { getValidSources } from "@/lib/validators/source";
 import { DEFAULT_OPPORTUNITY_SCORE_MIN } from "@/lib/constants/opportunities";
+import {
+  createdAtLteForMinAgeDays,
+  parseMinAgeDays,
+} from "@/lib/opportunities/min-age-filter";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +27,7 @@ export default async function OpportunitiesPage({ searchParams }: PageProps) {
     : DEFAULT_OPPORTUNITY_SCORE_MIN;
   const workingModel = params.workingModel;
   const listingType = params.listingType;
+  const minAgeDays = parseMinAgeDays(params.min_age_days);
 
   const where: Record<string, unknown> = {};
   if (status && status !== "All") where.status = status;
@@ -30,6 +35,9 @@ export default async function OpportunitiesPage({ searchParams }: PageProps) {
   if (scoreMin != null) where.score = { gte: scoreMin };
   if (workingModel) where.workingModel = workingModel;
   if (listingType) where.listingType = listingType;
+  if (minAgeDays != null) {
+    where.createdAt = { lte: createdAtLteForMinAgeDays(minAgeDays) };
+  }
 
   const [opportunities, total] = await Promise.all([
     prisma.opportunity.findMany({

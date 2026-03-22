@@ -21,6 +21,7 @@ describe("Sidebar", () => {
   it("renders all navigation links", () => {
     render(<Sidebar navCounts={defaultNavCounts} />);
 
+    expect(screen.getByTestId("nav-about-this-project")).toBeInTheDocument();
     expect(screen.getByTestId("nav-dashboard")).toBeInTheDocument();
     expect(screen.getByTestId("nav-opportunities")).toBeInTheDocument();
     expect(screen.getByTestId("nav-applications")).toBeInTheDocument();
