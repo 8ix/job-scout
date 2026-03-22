@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 import { getFeedIngestSummary } from "@/lib/feeds/feed-ingest-summary";
 import { FeedHealthTable } from "@/components/feeds/FeedHealthTable";
 import { FeedManager } from "@/components/feeds/FeedManager";
@@ -8,7 +9,10 @@ export const dynamic = "force-dynamic";
 
 export default async function FeedsPage() {
   const [feeds, ingestRows] = await Promise.all([
-    prisma.feed.findMany({ orderBy: { name: "asc" } }),
+    prisma.feed.findMany({
+      where: { name: { not: MANUAL_SOURCE } },
+      orderBy: { name: "asc" },
+    }),
     getFeedIngestSummary(prisma),
   ]);
 

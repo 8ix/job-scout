@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   assignPipelineBand,
   groupApplicationsByPipelineBand,
+  groupApplicationsByPipelineBandWithStale,
+  isStaleIdleApplication,
   normalizeApplicationStage,
   countDistinctStages,
 } from "@/lib/applications/pipeline";
@@ -72,5 +74,56 @@ describe("pipeline", () => {
     expect(
       countDistinctStages([{ stage: "Applied" }, { stage: null }, { stage: "Interview" }])
     ).toBe(2);
+  });
+
+  it("isStaleIdleApplication when old apply and no upcoming events", () => {
+    expect(
+      isStaleIdleApplication(
+        { appliedAt: past(70), scheduledEvents: [] },
+        now
+      )
+    ).toBe(true);
+    expect(
+      isStaleIdleApplication(
+        { appliedAt: past(70), scheduledEvents: [{ scheduledAt: future(1) }] },
+        now
+      )
+    ).toBe(false);
+    expect(
+      isStaleIdleApplication(
+        { appliedAt: past(30), scheduledEvents: [] },
+        now
+      )
+    ).toBe(false);
+  });
+
+  it("groupApplicationsByPipelineBandWithStale moves stale idle apps to last section only", () => {
+    const apps = [
+      {
+        id: "fresh-quiet",
+        stage: "Applied" as const,
+        appliedAt: past(10),
+        scheduledEvents: [] as { scheduledAt: string }[],
+      },
+      {
+        id: "stale-idle",
+        stage: "Applied" as const,
+        appliedAt: past(65),
+        scheduledEvents: [] as { scheduledAt: string }[],
+      },
+      {
+        id: "old-but-interview",
+        stage: "Applied" as const,
+        appliedAt: past(65),
+        scheduledEvents: [{ scheduledAt: future(1) }],
+      },
+    ];
+    const groups = groupApplicationsByPipelineBandWithStale(apps, now);
+    expect(groups.map((g) => g.band)).toEqual(["Applied", "quiet", "stale"]);
+    expect(groups[0].applications.map((a) => a.id)).toEqual(["old-but-interview"]);
+    expect(groups[1].applications.map((a) => a.id)).toEqual(["fresh-quiet"]);
+    expect(groups[2].applications.map((a) => a.id)).toEqual(["stale-idle"]);
+    expect(groups[0].applications.some((a) => a.id === "stale-idle")).toBe(false);
+    expect(groups[1].applications.some((a) => a.id === "stale-idle")).toBe(false);
   });
 });

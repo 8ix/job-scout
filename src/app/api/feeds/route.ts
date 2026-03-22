@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 import { unauthorizedResponse } from "@/lib/auth/api-key";
 import { authOptions } from "@/lib/auth/session";
 import { createFeedSchema } from "@/lib/validators/feed";
@@ -12,6 +13,7 @@ export async function GET() {
   if (!session) return unauthorizedResponse();
 
   const feeds = await prisma.feed.findMany({
+    where: { name: { not: MANUAL_SOURCE } },
     orderBy: { name: "asc" },
   });
 

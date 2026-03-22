@@ -6,7 +6,6 @@ import { signOut } from "next-auth/react";
 import type { NavCounts } from "@/lib/nav-counts";
 
 const navItems = [
-  { href: "/about", label: "About this project", icon: "ℹ️", countKey: null as keyof NavCounts | null },
   { href: "/dashboard", label: "Dashboard", icon: "📊", countKey: null as keyof NavCounts | null },
   { href: "/opportunities", label: "Opportunities", icon: "💼", countKey: "opportunities" as const },
   { href: "/applications", label: "Applications", icon: "📋", countKey: "applications" as const },
@@ -24,8 +23,18 @@ export function Sidebar({ navCounts }: SidebarProps) {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-border bg-card">
-      <div className="flex h-16 items-center border-b border-border px-6">
-        <h1 className="text-xl font-bold text-foreground">Job Scout</h1>
+      <div className="flex h-16 items-center border-b border-border px-4">
+        <Link href="/dashboard" className="flex items-center gap-3 min-w-0">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset in /public */}
+          <img
+            src="/brand-mini-owl.png"
+            alt=""
+            width={36}
+            height={36}
+            className="h-9 w-9 shrink-0 object-contain"
+          />
+          <h1 className="text-xl font-bold text-foreground truncate">Job Scout</h1>
+        </Link>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
@@ -60,8 +69,16 @@ export function Sidebar({ navCounts }: SidebarProps) {
           );
         })}
       </nav>
-      <div className="border-t border-border p-4">
+      <div className="border-t border-border p-4 space-y-1" data-testid="sidebar-footer">
+        <Link
+          href="/about"
+          data-testid="nav-about-this-project"
+          className="flex w-full rounded-lg px-3 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        >
+          About this project
+        </Link>
         <button
+          type="button"
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
         >

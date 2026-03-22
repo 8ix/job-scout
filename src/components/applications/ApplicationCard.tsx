@@ -4,9 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { PipelineApplication } from "./application-types";
 import type { PipelineBandKey } from "@/lib/applications/pipeline";
+import { STALE_APPLICATION_IDLE_DAYS } from "@/lib/constants/applications-ui";
 import { StageDropdown } from "./StageDropdown";
-
-const STALE_DAYS = 30;
 
 function getDaysSinceApplied(appliedAt: string | null): number | null {
   if (!appliedAt) return null;
@@ -35,6 +34,7 @@ const bandBorder: Record<PipelineBandKey, string> = {
   Screening: "border-l-violet-500",
   Applied: "border-l-slate-400 dark:border-l-slate-500",
   quiet: "border-l-amber-500/80",
+  stale: "border-l-rose-500/90 dark:border-l-rose-400/90",
 };
 
 function scoreBadgeColor(score: number): string {
@@ -53,7 +53,7 @@ export function ApplicationCard({ app, band, onOpenDetails }: ApplicationCardPro
   const router = useRouter();
   const now = new Date();
   const daysSinceApplied = getDaysSinceApplied(app.appliedAt);
-  const isStale = daysSinceApplied !== null && daysSinceApplied >= STALE_DAYS;
+  const isStale = daysSinceApplied !== null && daysSinceApplied >= STALE_APPLICATION_IDLE_DAYS;
   const next = nextFutureEvent(app.scheduledEvents, now);
 
   return (
@@ -104,6 +104,13 @@ export function ApplicationCard({ app, band, onOpenDetails }: ApplicationCardPro
             hour: "numeric",
             minute: "2-digit",
           })}
+        </p>
+      )}
+
+      {band === "stale" && (
+        <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+          Nothing scheduled in a long time — if this role is closed, set the stage to{" "}
+          <strong className="text-foreground/80">Archived</strong>.
         </p>
       )}
 

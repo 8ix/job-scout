@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 import { authOptions } from "@/lib/auth/session";
 import { unauthorizedResponse } from "@/lib/auth/api-key";
 import { getIncomingScoreDistribution } from "@/lib/stats/incoming-score-distribution";
@@ -16,18 +17,28 @@ export async function GET(request: Request) {
 
   const [totalOpportunities, applied, totalRejections, bySource, recentActivity, byScore] =
     await Promise.all([
-      prisma.opportunity.count(),
-      // Cumulative: ever applied (appliedAt set), regardless of later rejection
-      prisma.opportunity.count({ where: { appliedAt: { not: null } } }),
+      prisma.opportunity.count({
+        where: { source: { not: MANUAL_SOURCE } },
+      }),
+      prisma.opportunity.count({
+        where: {
+          appliedAt: { not: null },
+          source: { not: MANUAL_SOURCE },
+        },
+      }),
       prisma.rejection.count(),
       prisma.opportunity.groupBy({
         by: ["source"],
+        where: { source: { not: MANUAL_SOURCE } },
         _count: { id: true },
       }),
       prisma.opportunity.groupBy({
         by: ["createdAt"],
         _count: { id: true },
-        where: { createdAt: { gte: fourteenDaysAgo } },
+        where: {
+          createdAt: { gte: fourteenDaysAgo },
+          source: { not: MANUAL_SOURCE },
+        },
         orderBy: { createdAt: "asc" },
       }),
       getIncomingScoreDistribution(prisma),

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prismaMock } from "../helpers/prisma";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 
 vi.stubEnv("API_KEY", "test-key");
 vi.stubEnv("NEXTAUTH_SECRET", "test-secret");
@@ -50,6 +51,15 @@ describe("GET /api/stats", () => {
     expect(body.totalRejections).toBe(50);
     expect(body.applied).toBe(15);
     expect(body.conversionRate).toBeCloseTo(0.15);
+    expect(prismaMock.opportunity.count).toHaveBeenNthCalledWith(1, {
+      where: { source: { not: MANUAL_SOURCE } },
+    });
+    expect(prismaMock.opportunity.count).toHaveBeenNthCalledWith(2, {
+      where: {
+        appliedAt: { not: null },
+        source: { not: MANUAL_SOURCE },
+      },
+    });
     expect(body.bySource).toHaveLength(2);
     expect(body.byScore).toEqual([
       { band: "6", count: 10 },

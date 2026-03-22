@@ -2,11 +2,12 @@
 
 import { useState, useMemo } from "react";
 import {
-  groupApplicationsByPipelineBand,
+  groupApplicationsByPipelineBandWithStale,
   BAND_DESCRIPTIONS,
   countDistinctStages,
   type PipelineBandKey,
 } from "@/lib/applications/pipeline";
+import { STALE_APPLICATION_IDLE_DAYS } from "@/lib/constants/applications-ui";
 import type { PipelineApplication } from "./application-types";
 import { ApplicationCard } from "./ApplicationCard";
 import { ApplicationDetailsDialog } from "./ApplicationDetailsDialog";
@@ -22,13 +23,14 @@ const BAND_TITLES: Record<PipelineBandKey, string> = {
   Screening: "Screening",
   Applied: "Applied — with upcoming activity",
   quiet: "Waiting — no upcoming calls",
+  stale: "Stale — consider archiving",
 };
 
 export function ApplicationsPipeline({ applications }: ApplicationsPipelineProps) {
   const [detailsId, setDetailsId] = useState<string | null>(null);
 
   const groups = useMemo(
-    () => groupApplicationsByPipelineBand(applications, new Date()),
+    () => groupApplicationsByPipelineBandWithStale(applications, new Date()),
     [applications]
   );
 
@@ -50,8 +52,9 @@ export function ApplicationsPipeline({ applications }: ApplicationsPipelineProps
     <>
       <p className="text-sm text-muted-foreground">
         Pipeline uses <strong>{stageCount}</strong> distinct stage
-        {stageCount === 1 ? "" : "s"} on this page. Top sections are closest to an offer; the
-        bottom section is applications without a scheduled screening or interview yet.
+        {stageCount === 1 ? "" : "s"} on this page. Top sections are closest to an offer. The{" "}
+        <strong>Stale</strong> section at the bottom lists idle applications (no upcoming calls,{" "}
+        applied {STALE_APPLICATION_IDLE_DAYS}+ days ago) — archive there if the role is dead.
       </p>
 
       <div className="space-y-10">

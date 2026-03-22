@@ -3,6 +3,7 @@ import {
   SOURCE_QUALITY_MAX_SOURCES,
   SOURCE_QUALITY_WINDOW_DAYS,
 } from "@/lib/constants/dashboard";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 
 export type SourceQualityRow = {
   source: string;
@@ -101,7 +102,7 @@ export async function getSourceQuality(
   const [oppGroups, applyGroups, rejOnlyRows] = await Promise.all([
     prisma.opportunity.groupBy({
       by: ["source"],
-      where: { createdAt: { gte: start } },
+      where: { createdAt: { gte: start }, source: { not: MANUAL_SOURCE } },
       _count: { id: true },
       _avg: { score: true },
     }),
@@ -109,6 +110,7 @@ export async function getSourceQuality(
       by: ["source"],
       where: {
         appliedAt: { gte: start, not: null },
+        source: { not: MANUAL_SOURCE },
       },
       _count: { id: true },
     }),
@@ -116,6 +118,7 @@ export async function getSourceQuality(
       SELECT r."source", COUNT(*)::bigint AS count
       FROM rejections r
       WHERE r."createdAt" >= ${start}
+        AND r."source" <> ${MANUAL_SOURCE}
         AND NOT EXISTS (
           SELECT 1 FROM opportunities o
           WHERE o."jobId" = r."jobId" AND o."source" = r."source"

@@ -1,10 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   computeApplyRate,
   rowsFromOpportunityGroups,
   appendRejectionOnlySources,
   sortAndCapSourceQuality,
+  getSourceQuality,
 } from "@/lib/stats/source-quality";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 
 describe("computeApplyRate", () => {
   it("divides by max(ingested, 1)", () => {
@@ -70,6 +72,44 @@ describe("appendRejectionOnlySources", () => {
       opportunitiesIngested: 0,
       disqualifiedOnly: 4,
     });
+  });
+});
+
+describe("getSourceQuality", () => {
+  const prismaMock = {
+    opportunity: { groupBy: vi.fn() },
+    $queryRaw: vi.fn(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMock.opportunity.groupBy.mockResolvedValue([]);
+    prismaMock.$queryRaw.mockResolvedValue([]);
+  });
+
+  it("excludes manual source from opportunity and apply aggregations", async () => {
+    await getSourceQuality(prismaMock as never, {
+      now: new Date("2026-03-01T12:00:00Z"),
+      windowDays: 14,
+    });
+
+    expect(prismaMock.opportunity.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ source: { not: MANUAL_SOURCE } }),
+      })
+    );
+    const applyCall = prismaMock.opportunity.groupBy.mock.calls.find(
+      (c) => (c[0] as { where?: { appliedAt?: unknown } }).where?.appliedAt != null
+    );
+    expect(applyCall?.[0]).toMatchObject({
+      where: { source: { not: MANUAL_SOURCE } },
+    });
+  });
+
+  it("passes manual exclusion into rejection-only SQL", async () => {
+    await getSourceQuality(prismaMock as never, { now: new Date("2026-03-01T12:00:00Z") });
+    const values = prismaMock.$queryRaw.mock.calls[0].slice(1) as unknown[];
+    expect(values).toContain(MANUAL_SOURCE);
   });
 });
 

@@ -5,6 +5,7 @@ import {
   CONVERSION_COHORT_WINDOW_DAYS,
   FIRST_CALL_MEDIAN_WINDOW_DAYS,
 } from "@/lib/constants/dashboard";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 
 export type ReviewQueueVerdictRow = { verdict: string; count: number };
 export type ReviewQueueScoreRow = { score: number; count: number };
@@ -95,6 +96,7 @@ export async function getRollingConversionBySource(
       COUNT(*) FILTER (WHERE o."appliedAt" IS NOT NULL)::bigint AS applied
     FROM opportunities o
     WHERE o."createdAt" >= ${start}
+      AND o."source" <> ${MANUAL_SOURCE}
     GROUP BY o."source"
     ORDER BY ingested DESC
     LIMIT ${maxRows}

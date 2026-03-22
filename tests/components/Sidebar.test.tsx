@@ -21,7 +21,9 @@ describe("Sidebar", () => {
   it("renders all navigation links", () => {
     render(<Sidebar navCounts={defaultNavCounts} />);
 
-    expect(screen.getByTestId("nav-about-this-project")).toBeInTheDocument();
+    const about = screen.getByTestId("nav-about-this-project");
+    expect(about).toBeInTheDocument();
+    expect(about.closest('[data-testid="sidebar-footer"]')).toBeTruthy();
     expect(screen.getByTestId("nav-dashboard")).toBeInTheDocument();
     expect(screen.getByTestId("nav-opportunities")).toBeInTheDocument();
     expect(screen.getByTestId("nav-applications")).toBeInTheDocument();
@@ -30,9 +32,11 @@ describe("Sidebar", () => {
     expect(screen.getByTestId("nav-feeds")).toBeInTheDocument();
   });
 
-  it("renders the Job Scout title", () => {
+  it("renders the Job Scout title and brand image", () => {
     render(<Sidebar navCounts={defaultNavCounts} />);
     expect(screen.getByText("Job Scout")).toBeInTheDocument();
+    const img = document.querySelector('img[src="/brand-mini-owl.png"]');
+    expect(img).toBeTruthy();
   });
 
   it("highlights the active route", () => {

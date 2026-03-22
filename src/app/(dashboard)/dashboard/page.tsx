@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 import { DEFAULT_OPPORTUNITY_SCORE_MIN } from "@/lib/constants/opportunities";
 import {
   getApplyToFirstCallStats,
@@ -11,7 +12,6 @@ import { getSourceQuality } from "@/lib/stats/source-quality";
 import { getOutcomeFunnel } from "@/lib/stats/outcome-funnel";
 import { getPipelineSnapshot } from "@/lib/stats/pipeline-snapshot";
 import { getFeedIngestSummary } from "@/lib/feeds/feed-ingest-summary";
-import { excludeManualSource } from "@/lib/feeds/exclude-manual-source";
 import {
   CONVERSION_COHORT_WINDOW_DAYS,
   FIRST_CALL_MEDIAN_WINDOW_DAYS,
@@ -83,9 +83,16 @@ async function getStats() {
     rejectedByDate,
     opportunitiesCreatedByDate,
   ] = await Promise.all([
-    prisma.opportunity.count(),
-    // Cumulative: ever applied (appliedAt set), regardless of later rejection
-    prisma.opportunity.count({ where: { appliedAt: { not: null } } }),
+    prisma.opportunity.count({
+      where: { source: { not: MANUAL_SOURCE } },
+    }),
+    // Cumulative: ever applied (appliedAt set), regardless of later rejection — exclude manual ingest
+    prisma.opportunity.count({
+      where: {
+        appliedAt: { not: null },
+        source: { not: MANUAL_SOURCE },
+      },
+    }),
     prisma.rejection.count(),
     prisma.opportunity.count({
       where: {
@@ -104,6 +111,7 @@ async function getStats() {
       SELECT DATE("createdAt")::text as date, COUNT(*)::text as count
       FROM opportunities
       WHERE "createdAt" >= ${fourteenDaysAgo}
+        AND "source" <> ${MANUAL_SOURCE}
       GROUP BY DATE("createdAt")
       ORDER BY date ASC
     `,
@@ -145,7 +153,7 @@ async function getDailyFeedJobsData() {
     lastReceivedAt: r.lastIngestAt,
     stale: r.stale,
   }));
-  return excludeManualSource(mapped);
+  return mapped;
 }
 
 async function getUpcomingScheduledEvents() {

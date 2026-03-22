@@ -14,7 +14,7 @@ interface PageProps {
 export default async function RejectionsPage({ searchParams }: PageProps) {
   const [params, sources] = await Promise.all([searchParams, getValidSources()]);
   const page = Math.max(1, parseInt(params.page || "1"));
-  const limit = 20;
+  const limit = 21;
   const source = params.source;
 
   const where: Record<string, unknown> = {};

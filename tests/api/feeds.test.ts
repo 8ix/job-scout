@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prismaMock } from "../helpers/prisma";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 
 vi.stubEnv("API_KEY", "test-key");
 vi.stubEnv("NEXTAUTH_SECRET", "test-secret");
@@ -16,7 +17,7 @@ describe("GET /api/feeds", () => {
     mockGetServerSession.mockResolvedValue({ user: { name: "admin" } });
   });
 
-  it("returns all feeds ordered by name", async () => {
+  it("returns feeds excluding manual system feed, ordered by name", async () => {
     const feeds = [
       { id: "f1", name: "Adzuna", createdAt: new Date() },
       { id: "f2", name: "Reed", createdAt: new Date() },
@@ -24,14 +25,16 @@ describe("GET /api/feeds", () => {
     prismaMock.feed.findMany.mockResolvedValue(feeds);
 
     const { GET } = await import("@/app/api/feeds/route");
-    const request = new Request("http://localhost/api/feeds");
-
     const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body).toHaveLength(2);
     expect(body[0].name).toBe("Adzuna");
+    expect(prismaMock.feed.findMany).toHaveBeenCalledWith({
+      where: { name: { not: MANUAL_SOURCE } },
+      orderBy: { name: "asc" },
+    });
   });
 
   it("returns 401 without session", async () => {

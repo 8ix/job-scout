@@ -1,6 +1,9 @@
 /**
  * Pipeline heat: top bands are closest to an offer; bottom is quiet / early.
+ * `stale` is appended last by `groupApplicationsByPipelineBandWithStale` only.
  */
+
+import { STALE_APPLICATION_IDLE_DAYS } from "@/lib/constants/applications-ui";
 
 export const PIPELINE_STAGES_TOP_FIRST = [
   "Offer",
@@ -12,9 +15,10 @@ export const PIPELINE_STAGES_TOP_FIRST = [
 
 export type PipelineStageName = (typeof PIPELINE_STAGES_TOP_FIRST)[number];
 
-export type PipelineBandKey = PipelineStageName | "quiet";
+export type PipelineBandKey = PipelineStageName | "quiet" | "stale";
 
-export const PIPELINE_BAND_ORDER: PipelineBandKey[] = [
+/** Bands used by assignPipelineBand / core grouping (excludes `stale`). */
+export const PIPELINE_CORE_BAND_ORDER: Exclude<PipelineBandKey, "stale">[] = [
   "Offer",
   "Final Round",
   "Interview",
@@ -23,6 +27,9 @@ export const PIPELINE_BAND_ORDER: PipelineBandKey[] = [
   "quiet",
 ];
 
+/** @deprecated Use PIPELINE_CORE_BAND_ORDER; kept for clarity in imports. */
+export const PIPELINE_BAND_ORDER = PIPELINE_CORE_BAND_ORDER;
+
 export const BAND_DESCRIPTIONS: Record<PipelineBandKey, string> = {
   Offer: "Offers in hand or final negotiations",
   "Final Round": "Late-stage interviews",
@@ -30,6 +37,7 @@ export const BAND_DESCRIPTIONS: Record<PipelineBandKey, string> = {
   Screening: "Screening & early calls scheduled",
   Applied: "Applied with upcoming activity",
   quiet: "No screening or interviews scheduled yet — follow up when ready",
+  stale: `Applied at least ${STALE_APPLICATION_IDLE_DAYS} days ago with nothing scheduled — archive if the role is closed.`,
 };
 
 function nextUpcomingEvent(
@@ -41,6 +49,27 @@ function nextUpcomingEvent(
     .filter((d) => d.getTime() >= now.getTime());
   if (future.length === 0) return null;
   return new Date(Math.min(...future.map((d) => d.getTime())));
+}
+
+export function hasUpcomingScheduledEvent(
+  scheduledEvents: { scheduledAt: string }[],
+  now: Date
+): boolean {
+  return nextUpcomingEvent(scheduledEvents, now) !== null;
+}
+
+/**
+ * Idle stale: old enough since apply, and no future screening/interview on the calendar.
+ */
+export function isStaleIdleApplication(
+  app: { appliedAt: string | null; scheduledEvents: { scheduledAt: string }[] },
+  now: Date
+): boolean {
+  if (!app.appliedAt) return false;
+  if (hasUpcomingScheduledEvent(app.scheduledEvents, now)) return false;
+  const appliedMs = new Date(app.appliedAt).getTime();
+  const days = (now.getTime() - appliedMs) / (1000 * 60 * 60 * 24);
+  return days >= STALE_APPLICATION_IDLE_DAYS;
 }
 
 export function normalizeApplicationStage(stage: string | null | undefined): string {
@@ -57,7 +86,7 @@ export function assignPipelineBand(
   stage: string | null | undefined,
   scheduledEvents: { scheduledAt: string }[],
   now: Date
-): PipelineBandKey {
+): Exclude<PipelineBandKey, "stale"> {
   const s = normalizeApplicationStage(stage);
   const hasUpcoming = nextUpcomingEvent(scheduledEvents, now) !== null;
 
@@ -89,15 +118,26 @@ export function sortWithinBand<T extends { scheduledEvents: { scheduledAt: strin
   });
 }
 
+export function sortStaleOldestFirst<T extends { appliedAt: string | null }>(apps: T[]): T[] {
+  return [...apps].sort((a, b) => {
+    const ta = a.appliedAt ? new Date(a.appliedAt).getTime() : 0;
+    const tb = b.appliedAt ? new Date(b.appliedAt).getTime() : 0;
+    return ta - tb;
+  });
+}
+
 export function groupApplicationsByPipelineBand<
   T extends {
     stage: string | null;
     scheduledEvents: { scheduledAt: string }[];
     appliedAt: string | null;
   },
->(applications: T[], now: Date = new Date()): { band: PipelineBandKey; applications: T[] }[] {
-  const buckets = new Map<PipelineBandKey, T[]>();
-  for (const key of PIPELINE_BAND_ORDER) {
+>(
+  applications: T[],
+  now: Date = new Date()
+): { band: Exclude<PipelineBandKey, "stale">; applications: T[] }[] {
+  const buckets = new Map<Exclude<PipelineBandKey, "stale">, T[]>();
+  for (const key of PIPELINE_CORE_BAND_ORDER) {
     buckets.set(key, []);
   }
 
@@ -106,10 +146,33 @@ export function groupApplicationsByPipelineBand<
     buckets.get(band)!.push(app);
   }
 
-  return PIPELINE_BAND_ORDER.map((band) => ({
+  return PIPELINE_CORE_BAND_ORDER.map((band) => ({
     band,
     applications: sortWithinBand(buckets.get(band)!, now),
   })).filter(({ applications: list }) => list.length > 0);
+}
+
+export function groupApplicationsByPipelineBandWithStale<
+  T extends {
+    stage: string | null;
+    scheduledEvents: { scheduledAt: string }[];
+    appliedAt: string | null;
+  },
+>(applications: T[], now: Date = new Date()): { band: PipelineBandKey; applications: T[] }[] {
+  const stale: T[] = [];
+  const active: T[] = [];
+  for (const app of applications) {
+    if (isStaleIdleApplication(app, now)) stale.push(app);
+    else active.push(app);
+  }
+
+  const groups: { band: PipelineBandKey; applications: T[] }[] =
+    groupApplicationsByPipelineBand(active, now);
+
+  if (stale.length > 0) {
+    groups.push({ band: "stale", applications: sortStaleOldestFirst(stale) });
+  }
+  return groups;
 }
 
 export function countDistinctStages(

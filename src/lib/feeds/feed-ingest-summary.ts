@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@/generated/prisma/client";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 import { isFeedIngestStale } from "./ingest-health";
 
 export type FeedIngestSummaryRow = {
@@ -19,7 +20,7 @@ export async function getFeedIngestSummary(
 ): Promise<FeedIngestSummaryRow[]> {
   const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const feeds = await prisma.feed.findMany({ select: { name: true }, orderBy: { name: "asc" } });
-  const sources = feeds.map((f) => f.name);
+  const sources = feeds.map((f) => f.name).filter((name) => name !== MANUAL_SOURCE);
 
   if (sources.length === 0) {
     return [];

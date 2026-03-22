@@ -5,6 +5,7 @@ import {
   getRollingConversionBySource,
   getApplyToFirstCallStats,
 } from "@/lib/stats/dashboard-review-metrics";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
 
 const prismaMock = {
   opportunity: { count: vi.fn(), groupBy: vi.fn() },
@@ -73,6 +74,17 @@ describe("getRollingConversionBySource", () => {
       rate: 0.3,
     });
     expect(rows[1].rate).toBe(0);
+  });
+
+  it("SQL excludes manual source from cohort", async () => {
+    prismaMock.$queryRaw.mockResolvedValue([]);
+    await getRollingConversionBySource(prismaMock as never, {
+      windowDays: 30,
+      maxRows: 12,
+      now: new Date("2026-01-10T00:00:00.000Z"),
+    });
+    const values = prismaMock.$queryRaw.mock.calls[0].slice(1) as unknown[];
+    expect(values).toContain(MANUAL_SOURCE);
   });
 });
 
