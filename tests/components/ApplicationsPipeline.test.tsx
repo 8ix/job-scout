@@ -21,6 +21,7 @@ function buildApp(overrides: Partial<PipelineApplication> = {}): PipelineApplica
     contacts: [],
     scheduledEvents: [],
     stageLogs: [],
+    correspondence: [],
     ...overrides,
   };
 }

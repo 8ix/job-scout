@@ -14,6 +14,14 @@ export interface ApplicationStageLog {
   createdAt: string;
 }
 
+export interface ApplicationCorrespondenceItem {
+  id: string;
+  receivedAt: string;
+  subject: string | null;
+  body: string;
+  createdAt: string;
+}
+
 export interface PipelineApplication {
   id: string;
   title: string;
@@ -32,4 +40,5 @@ export interface PipelineApplication {
     notes: string | null;
   }[];
   stageLogs: ApplicationStageLog[];
+  correspondence: ApplicationCorrespondenceItem[];
 }

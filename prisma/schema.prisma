@@ -33,9 +33,10 @@ model Opportunity {
   recruiterContact     String?
   fullJobSpecification String? @db.Text
 
-  contacts        ApplicationContact[]
-  stageLogs       ApplicationStageLog[]
-  scheduledEvents ApplicationScheduledEvent[]
+  contacts         ApplicationContact[]
+  stageLogs        ApplicationStageLog[]
+  scheduledEvents  ApplicationScheduledEvent[]
+  correspondence   ApplicationCorrespondence[]
 
   @@unique([source, jobId])
   @@index([createdAt(sort: Desc)])
@@ -84,6 +85,21 @@ model ApplicationScheduledEvent {
   @@index([scheduledAt])
   @@index([opportunityId])
   @@map("application_scheduled_events")
+}
+
+model ApplicationCorrespondence {
+  id            String   @id @default(uuid())
+  opportunityId String
+  receivedAt    DateTime
+  subject       String?
+  body          String   @db.Text
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId])
+  @@index([receivedAt])
+  @@map("application_correspondence")
 }
 
 model Rejection {
@@ -143,4 +159,16 @@ model IngestBlockRule {
 
   @@index([enabled])
   @@map("ingest_block_rules")
+}
+
+/** Singleton (id = "default"): weekly/monthly meaningful-application targets for the dashboard. */
+model ApplicationGoalSettings {
+  id                  String @id @default("default")
+  timezone            String @default("UTC")
+  /** 0 = Sunday … 6 = Saturday (date-fns weekStartsOn). */
+  weekStartsOn        Int    @default(1)
+  weeklyTargetCount   Int    @default(0)
+  monthlyTargetCount  Int    @default(0)
+
+  @@map("application_goal_settings")
 }

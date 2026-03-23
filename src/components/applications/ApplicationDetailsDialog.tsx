@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ScheduledEventsPanel } from "./ScheduledEventsPanel";
 import { ContactsPane } from "./ContactsPane";
+import { CorrespondencePane } from "./CorrespondencePane";
 import type { PipelineApplication } from "./application-types";
 import { applicationStageLabel } from "@/lib/ui/stage-labels";
 
@@ -54,7 +55,7 @@ export function ApplicationDetailsDialog({
       />
       <div
         ref={panelRef}
-        className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-card shadow-lg sm:max-h-[85vh] sm:rounded-2xl"
+        className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-card shadow-lg sm:max-h-[85vh] sm:max-w-2xl sm:rounded-2xl"
       >
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div className="min-w-0">
@@ -111,6 +112,14 @@ export function ApplicationDetailsDialog({
             <ContactsPane
               opportunityId={app.id}
               contacts={app.contacts}
+              onUpdated={() => router.refresh()}
+            />
+          </section>
+
+          <section>
+            <CorrespondencePane
+              opportunityId={app.id}
+              correspondence={app.correspondence}
               onUpdated={() => router.refresh()}
             />
           </section>

@@ -12,9 +12,9 @@ export default async function ApplicationsPage() {
   });
 
   const ids = opportunities.map((o) => o.id);
-  const [contacts, scheduledEvents, stageLogs] =
+  const [contacts, scheduledEvents, stageLogs, correspondenceRows] =
     ids.length === 0
-      ? [[], [], []]
+      ? [[], [], [], []]
       : await Promise.all([
           prisma.applicationContact.findMany({
             where: { opportunityId: { in: ids } },
@@ -27,6 +27,10 @@ export default async function ApplicationsPage() {
           prisma.applicationStageLog.findMany({
             where: { opportunityId: { in: ids } },
             orderBy: { createdAt: "asc" },
+          }),
+          prisma.applicationCorrespondence.findMany({
+            where: { opportunityId: { in: ids } },
+            orderBy: { receivedAt: "asc" },
           }),
         ]);
 
@@ -69,6 +73,29 @@ export default async function ApplicationsPage() {
     return acc;
   }, {});
 
+  const correspondenceByOpp = correspondenceRows.reduce<
+    Record<
+      string,
+      {
+        id: string;
+        receivedAt: string;
+        subject: string | null;
+        body: string;
+        createdAt: string;
+      }[]
+    >
+  >((acc, row) => {
+    if (!acc[row.opportunityId]) acc[row.opportunityId] = [];
+    acc[row.opportunityId].push({
+      id: row.id,
+      receivedAt: row.receivedAt.toISOString(),
+      subject: row.subject,
+      body: row.body,
+      createdAt: row.createdAt.toISOString(),
+    });
+    return acc;
+  }, {});
+
   const applications = opportunities.map((o) => ({
     id: o.id,
     title: o.title,
@@ -90,6 +117,7 @@ export default async function ApplicationsPage() {
     })),
     scheduledEvents: eventsByOpp[o.id] ?? [],
     stageLogs: logsByOpp[o.id] ?? [],
+    correspondence: correspondenceByOpp[o.id] ?? [],
   }));
 
   return (

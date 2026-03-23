@@ -22,6 +22,7 @@ export async function GET(
       contacts: { orderBy: { createdAt: "asc" } },
       stageLogs: { orderBy: { createdAt: "asc" } },
       scheduledEvents: { orderBy: { scheduledAt: "asc" } },
+      correspondence: { orderBy: { receivedAt: "asc" } },
     },
   });
 
@@ -46,6 +47,11 @@ export async function GET(
       ...e,
       scheduledAt: e.scheduledAt.toISOString(),
       createdAt: e.createdAt.toISOString(),
+    })),
+    correspondence: opportunity.correspondence.map((c) => ({
+      ...c,
+      receivedAt: c.receivedAt.toISOString(),
+      createdAt: c.createdAt.toISOString(),
     })),
   });
 }

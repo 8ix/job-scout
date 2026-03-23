@@ -138,7 +138,7 @@ Typical flow: your automation calls these with `X-API-Key`. Dashboard **feed hea
 - `GET /api/prompts/active` — Active scoring prompt (no auth)
 - `POST /api/applications` — Create a manual / external application (`source: manual`, optional `appliedVia`, defaults to `External`; `url` is optional—omit or `null` if you have no posting link)
 - `PATCH /api/applications/:id` — Update application fields, `status`, or `stage` (same rules as opportunity PATCH; archive/reject via `stage`)
-- `GET /api/applications/:id` — Single application with contacts, stage logs, scheduled events
+- `GET /api/applications/:id` — Single application with contacts, correspondence (pasted messages), stage logs, scheduled events
 - `POST /api/applications/:id/events` — Add screening / interview (`kind`, `scheduledAt`, optional `notes`)
 - `PATCH /api/applications/:id/events/:eventId` — Update scheduled event
 - `DELETE /api/applications/:id/events/:eventId` — Remove scheduled event
@@ -151,8 +151,10 @@ Session **or** API key: `POST/PATCH/DELETE` on `/api/applications*` accept eithe
 - **`POST /api/applications/import`** — `multipart/form-data` with a field named `file` (`.csv`). Creates manual applications on **this** instance. Response: `{ created, skipped, truncated, errors: [{ row, message }] }`. Rows with the same `external_id` as a previous import are **skipped** (dedupe via `jobId`). Spreadsheet columns **Status**, **Interview Date**, and **Last Updated** are ignored; every imported row starts in stage **Applied**. Max row count is enforced (see `MAX_CSV_IMPORT_ROWS` in code).
 
 ### Dashboard (session auth)
+- `GET /api/preferences/application-goals`, `PATCH /api/preferences/application-goals` — Weekly and/or monthly **meaningful application** targets (score ≥ `DEFAULT_OPPORTUNITY_SCORE_MIN`, counted by `appliedAt` in your chosen IANA timezone and week-start day). Targets `0` disable that cadence. UI: **Dashboard** → Application goals.
 - `POST /api/ingest-blocklist`, `PATCH /api/ingest-blocklist/:id`, `DELETE /api/ingest-blocklist/:id` — Manage ingest blocklist (UI: **Blocklist** in the sidebar)
 - `GET /api/opportunities`, `PATCH /api/opportunities/:id` (includes enrichment: `appliedVia`, `recruiterContact`, `fullJobSpecification`, etc.)
+- `GET /api/opportunities/:id/correspondence`, `POST /api/opportunities/:id/correspondence`, `DELETE /api/opportunities/:id/correspondence?id=…` — Log pasted email/message text on an application with a **received-at** time (session only; UI: **Applications** → application details)
 - `GET /api/rejections` (same data as the **Disqualified** page in the UI)
 - `GET /api/prompts`, `POST /api/prompts`, `PATCH /api/prompts/:id/activate`
 - `GET /api/stats` — includes `totalRejections` (all rows), plus `workflowRejections` vs `blockedRejections` (ingest blocklist) for dashboards; `byScore` bands are scores **6–10** only (see **Score distribution** disclaimer). `GET /api/health`

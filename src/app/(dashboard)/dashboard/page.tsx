@@ -36,6 +36,8 @@ import { NextActionsStrip } from "@/components/dashboard/NextActionsStrip";
 import { ReviewQueueBreakdown } from "@/components/dashboard/ReviewQueueBreakdown";
 import { ConversionBySourceCard } from "@/components/dashboard/ConversionBySourceCard";
 import { ApplyToFirstCallCard } from "@/components/dashboard/ApplyToFirstCallCard";
+import { ApplicationGoalsCard } from "@/components/dashboard/ApplicationGoalsCard";
+import { getApplicationGoalsDashboardData } from "@/lib/goals/application-goal-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -239,6 +241,7 @@ export default async function DashboardPage() {
     conversionBySource,
     applyToFirstCall,
     ingestBlocklistPatternBreakdown,
+    applicationGoals,
   ] = await Promise.all([
     getStats(),
     getDailyFeedJobsData(),
@@ -259,6 +262,7 @@ export default async function DashboardPage() {
     getIngestBlocklistPatternBreakdown(prisma, {
       windowDays: INGEST_BLOCKLIST_PATTERN_WINDOW_DAYS,
     }),
+    getApplicationGoalsDashboardData(prisma),
   ]);
 
   const staleFeedSources = dailyFeedJobs.filter((f) => f.stale).map((f) => f.source);
@@ -275,6 +279,7 @@ export default async function DashboardPage() {
         upcomingInterviewCount={upcoming.length}
         activeApplications={pipeline.totalActive}
       />
+      <ApplicationGoalsCard initial={applicationGoals} />
       <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,360px)] lg:items-start">
         <StatsBar stats={stats} />
         <UpcomingInterviews events={upcoming} />
