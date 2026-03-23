@@ -5,7 +5,8 @@ import { StatsBar } from "@/components/dashboard/StatsBar";
 describe("StatsBar", () => {
   const stats = {
     totalOpportunities: 150,
-    totalRejections: 75,
+    workflowRejections: 60,
+    blockedRejections: 15,
     applied: 12,
     conversionRate: 0.08,
   };
@@ -14,7 +15,8 @@ describe("StatsBar", () => {
     render(<StatsBar stats={stats} />);
 
     expect(screen.getByText("150")).toBeInTheDocument();
-    expect(screen.getByText("75")).toBeInTheDocument();
+    expect(screen.getByText("60")).toBeInTheDocument();
+    expect(screen.getByText("15")).toBeInTheDocument();
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.getByText("8.0%")).toBeInTheDocument();
   });
@@ -23,7 +25,8 @@ describe("StatsBar", () => {
     render(<StatsBar stats={stats} />);
 
     expect(screen.getByText("Opportunities")).toBeInTheDocument();
-    expect(screen.getByText("Disqualified")).toBeInTheDocument();
+    expect(screen.getByText("Disqualified (workflow)")).toBeInTheDocument();
+    expect(screen.getByText("Blocked (ingest list)")).toBeInTheDocument();
     expect(screen.getByText("Applied")).toBeInTheDocument();
     expect(screen.getByText("% Applied")).toBeInTheDocument();
   });
@@ -33,14 +36,15 @@ describe("StatsBar", () => {
       <StatsBar
         stats={{
           totalOpportunities: 0,
-          totalRejections: 0,
+          workflowRejections: 0,
+          blockedRejections: 0,
           applied: 0,
           conversionRate: 0,
         }}
       />
     );
 
-    expect(screen.getAllByText("0")).toHaveLength(3);
+    expect(screen.getAllByText("0")).toHaveLength(4);
     expect(screen.getByText("0.0%")).toBeInTheDocument();
   });
 });

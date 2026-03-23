@@ -15,6 +15,7 @@ describe("POST /api/opportunities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prismaMock.feed.findUnique.mockResolvedValue({ id: "f1", name: "Adzuna", createdAt: new Date() });
+    prismaMock.ingestBlockRule.findMany.mockResolvedValue([]);
   });
 
   it("creates a new opportunity with valid input and API key", async () => {
@@ -93,6 +94,98 @@ describe("POST /api/opportunities", () => {
 
     const response = await POST(request);
     expect(response.status).toBe(400);
+  });
+
+  it("returns 422 when ingest blocklist matches company", async () => {
+    prismaMock.ingestBlockRule.findMany.mockResolvedValue([
+      { id: "rule-1", pattern: "Blocked Recruiter", scope: "company" },
+    ]);
+    const input = buildOpportunityInput({ company: "Blocked Recruiter LLC" });
+    prismaMock.opportunity.findUnique.mockResolvedValue(null);
+    prismaMock.rejection.findFirst.mockResolvedValue(null);
+    prismaMock.rejection.create.mockResolvedValue({
+      id: "rej-block-1",
+      jobId: input.jobId,
+      source: input.source,
+      title: input.title,
+      company: input.company,
+      url: input.url,
+      score: input.score,
+      redFlags: "Blocked by ingest blocklist",
+      ingestBlocklistRuleId: "rule-1",
+      ingestBlocklistPattern: "Blocked Recruiter",
+      ingestBlocklistScope: "company",
+      createdAt: new Date(),
+    });
+
+    const { POST } = await import("@/app/api/opportunities/route");
+    const response = await POST(
+      new Request("http://localhost/api/opportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": "test-key" },
+        body: JSON.stringify(input),
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(body.blocked).toBe(true);
+    expect(body.matchedRuleId).toBe("rule-1");
+    expect(body.pattern).toBe("Blocked Recruiter");
+    expect(body.scope).toBe("company");
+    expect(body.rejectionId).toBe("rej-block-1");
+    expect(prismaMock.opportunity.create).not.toHaveBeenCalled();
+    expect(prismaMock.rejection.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        jobId: input.jobId,
+        source: input.source,
+        ingestBlocklistRuleId: "rule-1",
+        ingestBlocklistPattern: "Blocked Recruiter",
+        ingestBlocklistScope: "company",
+      }),
+    });
+  });
+
+  it("updates existing rejection when same job is blocked again", async () => {
+    prismaMock.ingestBlockRule.findMany.mockResolvedValue([
+      { id: "rule-1", pattern: "Acme", scope: "company" },
+    ]);
+    const input = buildOpportunityInput({ jobId: "job-same", company: "Acme Staffing" });
+    prismaMock.opportunity.findUnique.mockResolvedValue(null);
+    prismaMock.rejection.findFirst.mockResolvedValue({ id: "rej-existing" });
+    prismaMock.rejection.update.mockResolvedValue({
+      id: "rej-existing",
+      jobId: input.jobId,
+      source: input.source,
+      title: input.title,
+      company: input.company,
+      url: input.url,
+      score: input.score,
+      redFlags: "x",
+      ingestBlocklistRuleId: "rule-1",
+      ingestBlocklistPattern: "Acme",
+      ingestBlocklistScope: "company",
+      createdAt: new Date(),
+    });
+
+    const { POST } = await import("@/app/api/opportunities/route");
+    const response = await POST(
+      new Request("http://localhost/api/opportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": "test-key" },
+        body: JSON.stringify(input),
+      })
+    );
+
+    expect(response.status).toBe(422);
+    expect(prismaMock.rejection.create).not.toHaveBeenCalled();
+    expect(prismaMock.rejection.update).toHaveBeenCalledWith({
+      where: { id: "rej-existing" },
+      data: expect.objectContaining({
+        ingestBlocklistPattern: "Acme",
+        ingestBlocklistRuleId: "rule-1",
+      }),
+    });
   });
 });
 

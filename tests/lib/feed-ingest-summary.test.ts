@@ -22,17 +22,24 @@ describe("getFeedIngestSummary", () => {
       }
       return Promise.resolve([{ source: "adzuna", _count: { id: 2 } }]);
     });
+    let rejGroupByCount = 0;
     prismaMock.rejection.groupBy.mockImplementation((args: { _max?: unknown }) => {
       if (args._max) {
         return Promise.resolve([{ source: "adzuna", _max: { createdAt: null } }]);
       }
-      return Promise.resolve([{ source: "adzuna", _count: { id: 0 } }]);
+      rejGroupByCount += 1;
+      if (rejGroupByCount === 1) {
+        return Promise.resolve([{ source: "adzuna", _count: { id: 1 } }]);
+      }
+      return Promise.resolve([{ source: "adzuna", _count: { id: 2 } }]);
     });
 
     const rows = await getFeedIngestSummary(prismaMock as never, new Date("2026-01-01T12:00:00Z"));
 
     expect(rows).toHaveLength(1);
     expect(rows[0].source).toBe("adzuna");
+    expect(rows[0].disqualified24h).toBe(1);
+    expect(rows[0].blocked24h).toBe(2);
 
     const lastOppCall = prismaMock.opportunity.groupBy.mock.calls.find((c) => (c[0] as { _max?: unknown })._max);
     expect(lastOppCall?.[0]).toMatchObject({

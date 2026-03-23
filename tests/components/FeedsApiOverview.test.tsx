@@ -7,6 +7,7 @@ describe("FeedsApiOverview", () => {
     render(<FeedsApiOverview />);
     expect(screen.getByTestId("feeds-api-overview")).toBeInTheDocument();
     expect(screen.getByText(/API setup for workflows/i)).toBeInTheDocument();
-    expect(screen.getByText(/X-API-Key/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/X-API-Key/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/GET \/api\/ingest-blocklist/i)).toBeInTheDocument();
   });
 });

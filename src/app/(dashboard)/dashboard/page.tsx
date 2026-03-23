@@ -15,10 +15,12 @@ import { getFeedIngestSummary } from "@/lib/feeds/feed-ingest-summary";
 import {
   CONVERSION_COHORT_WINDOW_DAYS,
   FIRST_CALL_MEDIAN_WINDOW_DAYS,
+  INGEST_BLOCKLIST_PATTERN_WINDOW_DAYS,
   OUTCOME_FUNNEL_WINDOWS_DAYS,
   SOURCE_QUALITY_WINDOW_DAYS,
   STUCK_NEW_DAYS,
 } from "@/lib/constants/dashboard";
+import { getIngestBlocklistPatternBreakdown } from "@/lib/rejections/blocklist-metrics";
 import { SourceQualityTable } from "@/components/dashboard/SourceQualityTable";
 import { OutcomeFunnel } from "@/components/dashboard/OutcomeFunnel";
 import { PipelineSnapshot } from "@/components/dashboard/PipelineSnapshot";
@@ -27,6 +29,7 @@ import { DailyFeedJobs } from "@/components/dashboard/DailyFeedJobs";
 import { FeedStaleAlert } from "@/components/dashboard/FeedStaleAlert";
 import { ScoreChart } from "@/components/dashboard/ScoreChart";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { IngestBlocklistVolumeCard } from "@/components/dashboard/IngestBlocklistVolumeCard";
 import { ReviewFlash } from "@/components/dashboard/ReviewFlash";
 import { UpcomingInterviews } from "@/components/dashboard/UpcomingInterviews";
 import { NextActionsStrip } from "@/components/dashboard/NextActionsStrip";
@@ -46,9 +49,22 @@ function fillDateRange(
   start: Date,
   end: Date,
   opportunitiesByDate: Map<string, number>,
-  rejectedByDate: Map<string, number>
-): { date: string; opportunities: number; rejected: number; jobsProcessed: number }[] {
-  const result: { date: string; opportunities: number; rejected: number; jobsProcessed: number }[] = [];
+  workflowRejectedByDate: Map<string, number>,
+  blockedByDate: Map<string, number>
+): {
+  date: string;
+  opportunities: number;
+  workflowRejected: number;
+  blocked: number;
+  jobsProcessed: number;
+}[] {
+  const result: {
+    date: string;
+    opportunities: number;
+    workflowRejected: number;
+    blocked: number;
+    jobsProcessed: number;
+  }[] = [];
   const cur = new Date(start);
   cur.setHours(0, 0, 0, 0);
   const endDate = new Date(end);
@@ -56,12 +72,14 @@ function fillDateRange(
   while (cur <= endDate) {
     const d = toIsoDate(cur);
     const opps = opportunitiesByDate.get(d) ?? 0;
-    const rej = rejectedByDate.get(d) ?? 0;
+    const wf = workflowRejectedByDate.get(d) ?? 0;
+    const bl = blockedByDate.get(d) ?? 0;
     result.push({
       date: d,
       opportunities: opps,
-      rejected: rej,
-      jobsProcessed: opps + rej,
+      workflowRejected: wf,
+      blocked: bl,
+      jobsProcessed: opps + wf + bl,
     });
     cur.setDate(cur.getDate() + 1);
   }
@@ -78,9 +96,11 @@ async function getStats() {
   const [
     totalOpportunities,
     appliedCount,
-    totalRejections,
+    workflowRejectionsCount,
+    blockedRejectionsCount,
     newOpportunitiesCount,
-    rejectedByDate,
+    workflowRejectedByDate,
+    blockedRejectedByDate,
     opportunitiesCreatedByDate,
   ] = await Promise.all([
     prisma.opportunity.count({
@@ -93,7 +113,12 @@ async function getStats() {
         source: { not: MANUAL_SOURCE },
       },
     }),
-    prisma.rejection.count(),
+    prisma.rejection.count({
+      where: { ingestBlocklistPattern: null },
+    }),
+    prisma.rejection.count({
+      where: { ingestBlocklistPattern: { not: null } },
+    }),
     prisma.opportunity.count({
       where: {
         status: "new",
@@ -104,6 +129,15 @@ async function getStats() {
       SELECT DATE("createdAt")::text as date, COUNT(*)::text as count
       FROM rejections
       WHERE "createdAt" >= ${fourteenDaysAgo}
+        AND "ingest_blocklist_pattern" IS NULL
+      GROUP BY DATE("createdAt")
+      ORDER BY date ASC
+    `,
+    prisma.$queryRaw<DateCountRow[]>`
+      SELECT DATE("createdAt")::text as date, COUNT(*)::text as count
+      FROM rejections
+      WHERE "createdAt" >= ${fourteenDaysAgo}
+        AND "ingest_blocklist_pattern" IS NOT NULL
       GROUP BY DATE("createdAt")
       ORDER BY date ASC
     `,
@@ -124,18 +158,25 @@ async function getStats() {
   const opportunitiesMap = new Map(
     opportunitiesCreatedByDate.map((r) => [r.date, parseInt(r.count, 10)])
   );
-  const rejectedMap = new Map(rejectedByDate.map((r) => [r.date, parseInt(r.count, 10)]));
+  const workflowRejectedMap = new Map(
+    workflowRejectedByDate.map((r) => [r.date, parseInt(r.count, 10)])
+  );
+  const blockedRejectedMap = new Map(
+    blockedRejectedByDate.map((r) => [r.date, parseInt(r.count, 10)])
+  );
 
   const recentActivity = fillDateRange(
     fourteenDaysAgo,
     today,
     opportunitiesMap,
-    rejectedMap
+    workflowRejectedMap,
+    blockedRejectedMap
   );
 
   return {
     totalOpportunities,
-    totalRejections,
+    workflowRejections: workflowRejectionsCount,
+    blockedRejections: blockedRejectionsCount,
     applied: appliedCount,
     newOpportunitiesCount,
     conversionRate,
@@ -150,6 +191,7 @@ async function getDailyFeedJobsData() {
     source: r.source,
     opportunities: r.opportunities24h,
     rejected: r.disqualified24h,
+    blocked: r.blocked24h,
     lastReceivedAt: r.lastIngestAt,
     stale: r.stale,
   }));
@@ -196,6 +238,7 @@ export default async function DashboardPage() {
     reviewBreakdown,
     conversionBySource,
     applyToFirstCall,
+    ingestBlocklistPatternBreakdown,
   ] = await Promise.all([
     getStats(),
     getDailyFeedJobsData(),
@@ -213,6 +256,9 @@ export default async function DashboardPage() {
       windowDays: CONVERSION_COHORT_WINDOW_DAYS,
     }),
     getApplyToFirstCallStats(prisma, { windowDays: FIRST_CALL_MEDIAN_WINDOW_DAYS }),
+    getIngestBlocklistPatternBreakdown(prisma, {
+      windowDays: INGEST_BLOCKLIST_PATTERN_WINDOW_DAYS,
+    }),
   ]);
 
   const staleFeedSources = dailyFeedJobs.filter((f) => f.stale).map((f) => f.source);
@@ -253,7 +299,14 @@ export default async function DashboardPage() {
         <DailyFeedJobs feeds={dailyFeedJobs} />
         <ScoreChart byScore={stats.byScore} />
       </div>
-      <RecentActivity activity={stats.recentActivity} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <RecentActivity activity={stats.recentActivity} />
+        <IngestBlocklistVolumeCard
+          rows={ingestBlocklistPatternBreakdown}
+          windowDays={INGEST_BLOCKLIST_PATTERN_WINDOW_DAYS}
+          totalBlockedInWindow={funnel30.blockedListings}
+        />
+      </div>
     </div>
   );
 }

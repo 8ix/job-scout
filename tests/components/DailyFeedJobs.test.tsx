@@ -12,8 +12,8 @@ describe("DailyFeedJobs", () => {
     render(
       <DailyFeedJobs
         feeds={[
-          { source: "Adzuna", opportunities: 10, rejected: 5 },
-          { source: "Reed", opportunities: 2, rejected: 15 },
+          { source: "Adzuna", opportunities: 10, rejected: 5, blocked: 0 },
+          { source: "Reed", opportunities: 2, rejected: 15, blocked: 1 },
         ]}
       />
     );
@@ -21,7 +21,7 @@ describe("DailyFeedJobs", () => {
     expect(screen.getByText("Adzuna")).toBeInTheDocument();
     expect(screen.getByText("Reed")).toBeInTheDocument();
     expect(screen.getByText("10 opps / 5 disqualified")).toBeInTheDocument();
-    expect(screen.getByText("2 opps / 15 disqualified")).toBeInTheDocument();
+    expect(screen.getByText(/2 opps \/ 15 disqualified \/ 1 blocked/)).toBeInTheDocument();
   });
 
   it("renders last received time when provided", () => {
@@ -36,6 +36,7 @@ describe("DailyFeedJobs", () => {
               source: "Reed",
               opportunities: 13,
               rejected: 59,
+              blocked: 0,
               lastReceivedAt: twoDaysAgo.toISOString(),
             },
           ]}
@@ -56,6 +57,7 @@ describe("DailyFeedJobs", () => {
             source: "QuietFeed",
             opportunities: 0,
             rejected: 0,
+            blocked: 0,
             lastReceivedAt: null,
             stale: true,
           },

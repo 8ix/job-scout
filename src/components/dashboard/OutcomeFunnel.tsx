@@ -5,15 +5,37 @@ interface OutcomeFunnelProps {
   thirty: OutcomeFunnelSnapshot;
 }
 
+function barClassForKey(key: string): string {
+  switch (key) {
+    case "dq":
+      return "bg-danger";
+    case "blocked":
+      return "bg-amber-500";
+    default:
+      return "bg-primary";
+  }
+}
+
 function FunnelColumn({ label, data }: { label: string; data: OutcomeFunnelSnapshot }) {
-  const max = Math.max(data.ingested, data.applied, data.disqualifiedListings, 1);
+  const max = Math.max(
+    data.ingested,
+    data.applied,
+    data.disqualifiedListings,
+    data.blockedListings,
+    1
+  );
   const steps = [
     { key: "ingested", title: "Opportunities ingested", value: data.ingested },
     { key: "applied", title: "Applied (appliedAt in window)", value: data.applied },
     {
       key: "dq",
-      title: "Disqualified listings",
+      title: "Disqualified (workflow)",
       value: data.disqualifiedListings,
+    },
+    {
+      key: "blocked",
+      title: "Blocked (ingest list)",
+      value: data.blockedListings,
     },
   ] as const;
 
@@ -28,7 +50,7 @@ function FunnelColumn({ label, data }: { label: string; data: OutcomeFunnelSnaps
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-primary transition-all"
+              className={`h-full rounded-full transition-all ${barClassForKey(s.key)}`}
               style={{ width: `${(s.value / max) * 100}%` }}
             />
           </div>
@@ -45,9 +67,12 @@ export function OutcomeFunnel({ seven, thirty }: OutcomeFunnelProps) {
       <p className="mt-1 mb-4 text-xs text-muted-foreground leading-relaxed">
         Activity by timestamp: ingested = opportunities created in the window; applied = rows with{" "}
         <code className="text-[11px]">appliedAt</code> in the window (can include jobs ingested
-        earlier). Disqualified = <code className="text-[11px]">rejections</code> created in the
-        window. Does <strong className="font-medium text-foreground/80">not</strong> include
-        in-app “Disqualify” on an opportunity unless a rejection row is written.
+        earlier). <strong className="text-foreground/80">Disqualified (workflow)</strong> ={" "}
+        <code className="text-[11px]">rejections</code> from your automation (no blocklist).{" "}
+        <strong className="text-foreground/80">Blocked (ingest list)</strong> = server refused{" "}
+        <code className="text-[11px]">POST /api/opportunities</code> due to a block rule. Does{" "}
+        <strong className="font-medium text-foreground/80">not</strong> include in-app “Disqualify”
+        on an opportunity unless a rejection row is written.
       </p>
       <div className="grid gap-8 sm:grid-cols-2">
         <FunnelColumn label="Last 7 days" data={seven} />

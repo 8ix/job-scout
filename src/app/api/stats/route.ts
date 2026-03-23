@@ -15,18 +15,30 @@ export async function GET(request: Request) {
   const fourteenDaysAgo = new Date();
   fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
-  const [totalOpportunities, applied, totalRejections, bySource, recentActivity, byScore] =
-    await Promise.all([
-      prisma.opportunity.count({
-        where: { source: { not: MANUAL_SOURCE } },
-      }),
-      prisma.opportunity.count({
-        where: {
-          appliedAt: { not: null },
-          source: { not: MANUAL_SOURCE },
-        },
-      }),
-      prisma.rejection.count(),
+  const [
+    totalOpportunities,
+    applied,
+    workflowRejections,
+    blockedRejections,
+    bySource,
+    recentActivity,
+    byScore,
+  ] = await Promise.all([
+    prisma.opportunity.count({
+      where: { source: { not: MANUAL_SOURCE } },
+    }),
+    prisma.opportunity.count({
+      where: {
+        appliedAt: { not: null },
+        source: { not: MANUAL_SOURCE },
+      },
+    }),
+    prisma.rejection.count({
+      where: { ingestBlocklistPattern: null },
+    }),
+    prisma.rejection.count({
+      where: { ingestBlocklistPattern: { not: null } },
+    }),
       prisma.opportunity.groupBy({
         by: ["source"],
         where: { source: { not: MANUAL_SOURCE } },
@@ -49,7 +61,10 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     totalOpportunities,
-    totalRejections,
+    /** All rejection rows (workflow + ingest blocklist). */
+    totalRejections: workflowRejections + blockedRejections,
+    workflowRejections,
+    blockedRejections,
     applied,
     conversionRate,
     bySource: bySource.map((s) => ({

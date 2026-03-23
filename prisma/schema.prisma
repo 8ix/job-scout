@@ -87,18 +87,23 @@ model ApplicationScheduledEvent {
 }
 
 model Rejection {
-  id        String   @id @default(uuid())
-  jobId     String
-  source    String
-  title     String
-  company   String?
-  url       String
-  score     Int
-  redFlags  String?
-  createdAt DateTime @default(now())
+  id                     String   @id @default(uuid())
+  jobId                  String
+  source                 String
+  title                  String
+  company                String?
+  url                    String
+  score                  Int
+  redFlags               String?
+  createdAt              DateTime @default(now())
+  /** When set, this row was created by ingest blocklist (server), not workflow disqualification. */
+  ingestBlocklistRuleId  String?  @map("ingest_blocklist_rule_id")
+  ingestBlocklistPattern String?  @map("ingest_blocklist_pattern")
+  ingestBlocklistScope   String?  @map("ingest_blocklist_scope")
 
   @@index([createdAt(sort: Desc)])
   @@index([source])
+  @@index([source, jobId])
   @@map("rejections")
 }
 
@@ -120,4 +125,22 @@ model Feed {
   createdAt DateTime @default(now())
 
   @@map("feeds")
+}
+
+enum IngestBlockScope {
+  company
+  title
+  any
+}
+
+model IngestBlockRule {
+  id        String           @id @default(uuid())
+  createdAt DateTime         @default(now())
+  enabled   Boolean          @default(true)
+  pattern   String
+  scope     IngestBlockScope
+  note      String?
+
+  @@index([enabled])
+  @@map("ingest_block_rules")
 }

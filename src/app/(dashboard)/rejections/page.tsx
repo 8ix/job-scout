@@ -37,7 +37,15 @@ export default async function RejectionsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-foreground">Disqualified</h2>
+      <div>
+        <h2 className="text-2xl font-bold text-foreground">Disqualified</h2>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground leading-relaxed">
+          <span className="font-medium text-card-foreground">Amber cards</span> are{" "}
+          <strong className="text-foreground/80">ingest blocklist</strong> hits (server refused the job
+          and shows the matched pattern so you can tune rules). Other cards are listings your workflow
+          sent as <code className="text-xs">POST /api/rejections</code>.
+        </p>
+      </div>
       <Suspense fallback={null}>
         <SourceFilter sources={sources} />
       </Suspense>

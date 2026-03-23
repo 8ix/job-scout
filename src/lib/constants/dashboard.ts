@@ -18,3 +18,6 @@ export const FIRST_CALL_MEDIAN_WINDOW_DAYS = 90;
 
 /** Max rows in conversion-by-source table. */
 export const CONVERSION_BY_SOURCE_MAX_ROWS = 12;
+
+/** Window for “top blocked patterns” card on the dashboard. */
+export const INGEST_BLOCKLIST_PATTERN_WINDOW_DAYS = 30;

@@ -13,8 +13,10 @@ export const prismaMock = {
   },
   rejection: {
     create: vi.fn(),
+    findFirst: vi.fn(),
     findMany: vi.fn(),
     count: vi.fn(),
+    update: vi.fn(),
     deleteMany: vi.fn(),
   },
   systemPrompt: {
@@ -32,6 +34,13 @@ export const prismaMock = {
     findMany: vi.fn(),
     delete: vi.fn(),
     deleteMany: vi.fn(),
+  },
+  ingestBlockRule: {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
   },
   applicationContact: {
     create: vi.fn(),

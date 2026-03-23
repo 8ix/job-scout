@@ -21,7 +21,7 @@ describe("GET /api/stats", () => {
     prismaMock.opportunity.count
       .mockResolvedValueOnce(100)   // total
       .mockResolvedValueOnce(15);  // applied
-    prismaMock.rejection.count.mockResolvedValue(50);
+    prismaMock.rejection.count.mockResolvedValueOnce(40).mockResolvedValueOnce(10);
     prismaMock.$queryRaw.mockResolvedValue([
       { score: 3, count: 20n },
       { score: 6, count: 10n },
@@ -49,6 +49,8 @@ describe("GET /api/stats", () => {
     expect(response.status).toBe(200);
     expect(body.totalOpportunities).toBe(100);
     expect(body.totalRejections).toBe(50);
+    expect(body.workflowRejections).toBe(40);
+    expect(body.blockedRejections).toBe(10);
     expect(body.applied).toBe(15);
     expect(body.conversionRate).toBeCloseTo(0.15);
     expect(prismaMock.opportunity.count).toHaveBeenNthCalledWith(1, {
@@ -74,7 +76,7 @@ describe("GET /api/stats", () => {
     prismaMock.opportunity.count
       .mockResolvedValueOnce(0)   // total
       .mockResolvedValueOnce(0);  // applied
-    prismaMock.rejection.count.mockResolvedValue(0);
+    prismaMock.rejection.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
     prismaMock.$queryRaw.mockResolvedValue([]);
     prismaMock.opportunity.groupBy
       .mockResolvedValueOnce([])
@@ -88,6 +90,9 @@ describe("GET /api/stats", () => {
 
     expect(response.status).toBe(200);
     expect(body.totalOpportunities).toBe(0);
+    expect(body.totalRejections).toBe(0);
+    expect(body.workflowRejections).toBe(0);
+    expect(body.blockedRejections).toBe(0);
     expect(body.conversionRate).toBe(0);
     expect(body.bySource).toEqual([]);
     expect(body.byScore).toEqual([

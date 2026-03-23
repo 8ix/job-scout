@@ -12,6 +12,7 @@ const navItems = [
   { href: "/rejections", label: "Disqualified", icon: "🚫", countKey: "rejections" as const },
   { href: "/prompts", label: "Prompts", icon: "📝", countKey: null },
   { href: "/feeds", label: "Feeds", icon: "📡", countKey: "feeds" as const },
+  { href: "/ingest-blocklist", label: "Blocklist", icon: "🧱", countKey: null },
 ];
 
 interface SidebarProps {

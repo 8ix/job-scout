@@ -106,6 +106,7 @@ docker compose up -d
 | `NEXTAUTH_URL` | Public URL of the app |
 | `DASHBOARD_USERNAME` | Dashboard login |
 | `DASHBOARD_PASSWORD` | Dashboard login |
+| `BLOCKLIST_PUBLIC_READ` | Optional. Set to `true` to allow **unauthenticated** `GET /api/ingest-blocklist` (defaults off; use `X-API-Key` instead). |
 
 ## Development
 
@@ -130,6 +131,7 @@ Typical flow: your automation calls these with `X-API-Key`. Dashboard **feed hea
 
 ### n8n-facing (API key via `X-API-Key` header)
 
+- `GET /api/ingest-blocklist` — Export enabled global block rules as JSON (`version`, `updatedAt`, `rules[]` with `id`, `pattern`, `scope`, `enabled`) for use in workflows. Same API key as ingest routes unless `BLOCKLIST_PUBLIC_READ=true` (not recommended). Matching `POST /api/opportunities` bodies are rejected with **422** (response includes `pattern`, `scope`, `rejectionId`) and are **not** stored as opportunities; a **rejection** row is created/updated so they appear on the **Disqualified** page with amber styling and the matched pattern for debugging.
 - `POST /api/opportunities` — Ingest scored job
 - `POST /api/rejections` — Ingest disqualified job listing (stored as a rejection record; dashboard UI labels this **Disqualified**)
 - `POST /api/seen-ids` — Batch deduplication check
@@ -149,7 +151,8 @@ Session **or** API key: `POST/PATCH/DELETE` on `/api/applications*` accept eithe
 - **`POST /api/applications/import`** — `multipart/form-data` with a field named `file` (`.csv`). Creates manual applications on **this** instance. Response: `{ created, skipped, truncated, errors: [{ row, message }] }`. Rows with the same `external_id` as a previous import are **skipped** (dedupe via `jobId`). Spreadsheet columns **Status**, **Interview Date**, and **Last Updated** are ignored; every imported row starts in stage **Applied**. Max row count is enforced (see `MAX_CSV_IMPORT_ROWS` in code).
 
 ### Dashboard (session auth)
+- `POST /api/ingest-blocklist`, `PATCH /api/ingest-blocklist/:id`, `DELETE /api/ingest-blocklist/:id` — Manage ingest blocklist (UI: **Blocklist** in the sidebar)
 - `GET /api/opportunities`, `PATCH /api/opportunities/:id` (includes enrichment: `appliedVia`, `recruiterContact`, `fullJobSpecification`, etc.)
 - `GET /api/rejections` (same data as the **Disqualified** page in the UI)
 - `GET /api/prompts`, `POST /api/prompts`, `PATCH /api/prompts/:id/activate`
-- `GET /api/stats` (includes `byScore` bands for scores **6–10** only; scores ≤5 are omitted from that histogram—see dashboard **Score distribution** disclaimer), `GET /api/health`
+- `GET /api/stats` — includes `totalRejections` (all rows), plus `workflowRejections` vs `blockedRejections` (ingest blocklist) for dashboards; `byScore` bands are scores **6–10** only (see **Score distribution** disclaimer). `GET /api/health`

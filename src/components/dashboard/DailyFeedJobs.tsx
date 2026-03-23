@@ -5,7 +5,10 @@ import { formatTimeAgo } from "@/lib/format";
 export interface FeedJobCounts {
   source: string;
   opportunities: number;
+  /** Workflow disqualified (POST /api/rejections), not ingest blocklist. */
   rejected: number;
+  /** Ingest blocklist blocks for this feed in the last 24h. */
+  blocked: number;
   lastReceivedAt?: Date | string | null;
   /** True when no ingest in the last 24h (opportunities + disqualified API activity). */
   stale?: boolean;
@@ -33,15 +36,17 @@ export function DailyFeedJobs({ feeds }: DailyFeedJobsProps) {
         Daily Feed Jobs (24h)
       </h3>
       <p className="text-xs text-muted-foreground mb-4">
-        Opportunities vs disqualified listings per feed in the last 24 hours. Last activity is
-        whenever this feed last posted an opportunity or disqualified listing — no separate
-        heartbeat.
+        Per feed in the last 24 hours: opportunities (green), workflow disqualified (red), ingest
+        blocklist blocks (amber). Last activity is whenever this feed last posted any of these — no
+        separate heartbeat.
       </p>
       <div className="space-y-4">
         {feeds.map((f) => {
-          const total = f.opportunities + f.rejected;
-          const greenPct = total > 0 ? (f.opportunities / total) * 100 : 50;
-          const redPct = total > 0 ? (f.rejected / total) * 100 : 50;
+          const blocked = f.blocked ?? 0;
+          const total = f.opportunities + f.rejected + blocked;
+          const greenPct = total > 0 ? (f.opportunities / total) * 100 : 0;
+          const redPct = total > 0 ? (f.rejected / total) * 100 : 0;
+          const amberPct = total > 0 ? (blocked / total) * 100 : 0;
           return (
             <div
               key={f.source}
@@ -72,6 +77,7 @@ export function DailyFeedJobs({ feeds }: DailyFeedJobsProps) {
                 </span>
                 <span className="text-muted-foreground">
                   {f.opportunities} opps / {f.rejected} disqualified
+                  {blocked > 0 ? ` / ${blocked} blocked` : ""}
                 </span>
               </div>
               <div className="flex h-6 rounded overflow-hidden">
@@ -83,7 +89,12 @@ export function DailyFeedJobs({ feeds }: DailyFeedJobsProps) {
                 <div
                   className="bg-danger transition-all min-w-0 shrink-0"
                   style={{ width: `${redPct}%` }}
-                  title={`Disqualified: ${f.rejected}`}
+                  title={`Disqualified (workflow): ${f.rejected}`}
+                />
+                <div
+                  className="bg-amber-500 transition-all min-w-0 shrink-0"
+                  style={{ width: `${amberPct}%` }}
+                  title={`Blocked (ingest list): ${blocked}`}
                 />
               </div>
             </div>

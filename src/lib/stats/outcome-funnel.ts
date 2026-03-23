@@ -1,10 +1,17 @@
 import type { PrismaClient } from "@/generated/prisma/client";
+import {
+  INGEST_BLOCKLIST_REJECTION_FILTER,
+  WORKFLOW_REJECTION_FILTER,
+} from "@/lib/rejections/blocklist-metrics";
 
 export type OutcomeFunnelSnapshot = {
   windowDays: number;
   ingested: number;
   applied: number;
+  /** Workflow disqualified listings (rejections without ingest blocklist match). */
   disqualifiedListings: number;
+  /** Server-blocked by ingest blocklist (same rows as amber cards on Disqualified). */
+  blockedListings: number;
 };
 
 function windowStart(days: number, now: Date): Date {
@@ -21,7 +28,7 @@ export async function getOutcomeFunnel(
 ): Promise<OutcomeFunnelSnapshot> {
   const start = windowStart(windowDays, now);
 
-  const [ingested, applied, disqualifiedListings] = await Promise.all([
+  const [ingested, applied, disqualifiedListings, blockedListings] = await Promise.all([
     prisma.opportunity.count({
       where: { createdAt: { gte: start } },
     }),
@@ -31,7 +38,16 @@ export async function getOutcomeFunnel(
       },
     }),
     prisma.rejection.count({
-      where: { createdAt: { gte: start } },
+      where: {
+        createdAt: { gte: start },
+        ...WORKFLOW_REJECTION_FILTER,
+      },
+    }),
+    prisma.rejection.count({
+      where: {
+        createdAt: { gte: start },
+        ...INGEST_BLOCKLIST_REJECTION_FILTER,
+      },
     }),
   ]);
 
@@ -40,5 +56,6 @@ export async function getOutcomeFunnel(
     ingested,
     applied,
     disqualifiedListings,
+    blockedListings,
   };
 }

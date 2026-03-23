@@ -11,7 +11,7 @@ describe("getOutcomeFunnel", () => {
           .mockResolvedValueOnce(12),
       },
       rejection: {
-        count: vi.fn().mockResolvedValueOnce(30),
+        count: vi.fn().mockResolvedValueOnce(25).mockResolvedValueOnce(5),
       },
     };
 
@@ -22,7 +22,8 @@ describe("getOutcomeFunnel", () => {
       windowDays: 7,
       ingested: 100,
       applied: 12,
-      disqualifiedListings: 30,
+      disqualifiedListings: 25,
+      blockedListings: 5,
     });
   });
 });

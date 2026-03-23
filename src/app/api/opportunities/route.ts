@@ -5,6 +5,8 @@ import { validateApiKey, unauthorizedResponse } from "@/lib/auth/api-key";
 import { authOptions } from "@/lib/auth/session";
 import { createOpportunitySchema } from "@/lib/validators/opportunity";
 import { isValidSource, getValidSources } from "@/lib/validators/source";
+import { findMatchingIngestBlockRule } from "@/lib/ingest-blocklist/match";
+import { persistIngestBlocklistRejection } from "@/lib/rejections/persist-ingest-blocklist-rejection";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,33 @@ export async function POST(request: Request) {
 
   if (existing) {
     return NextResponse.json(existing, { status: 200 });
+  }
+
+  const blockRules = await prisma.ingestBlockRule.findMany({
+    where: { enabled: true },
+    select: { id: true, pattern: true, scope: true },
+  });
+  const blockedBy = findMatchingIngestBlockRule(
+    {
+      company: rest.company,
+      title: rest.title,
+      description: rest.description ?? null,
+    },
+    blockRules
+  );
+  if (blockedBy) {
+    const rejection = await persistIngestBlocklistRejection(prisma, rest, blockedBy);
+    return NextResponse.json(
+      {
+        blocked: true,
+        reason: "ingest_blocklist",
+        matchedRuleId: blockedBy.id,
+        pattern: blockedBy.pattern,
+        scope: blockedBy.scope,
+        rejectionId: rejection.id,
+      },
+      { status: 422 }
+    );
   }
 
   const opportunity = await prisma.opportunity.create({

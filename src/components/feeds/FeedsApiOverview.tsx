@@ -42,6 +42,12 @@ export function FeedsApiOverview() {
             duplicates before scoring.
           </li>
           <li>
+            Optionally call <code className="text-xs">GET /api/ingest-blocklist</code> with{" "}
+            <code className="text-xs">X-API-Key</code> (same as other ingest routes) to load global
+            block rules—filter in your workflow before scoring, or rely on server-side blocking on{" "}
+            <code className="text-xs">POST /api/opportunities</code> (422 if a rule matches).
+          </li>
+          <li>
             <code className="text-xs">POST /api/opportunities</code> for roles you want in the
             pipeline, or <code className="text-xs">POST /api/rejections</code> for disqualified
             listings.
