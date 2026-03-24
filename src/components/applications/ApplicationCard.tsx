@@ -32,8 +32,9 @@ const bandBorder: Record<PipelineBandKey, string> = {
   "Final Round": "border-l-teal-500",
   Interview: "border-l-sky-500",
   Screening: "border-l-violet-500",
+  screeningWaiting: "border-l-violet-400/90 dark:border-l-violet-400/70",
   Applied: "border-l-slate-400 dark:border-l-slate-500",
-  quiet: "border-l-amber-500/80",
+  appliedWaiting: "border-l-amber-500/80",
   stale: "border-l-rose-500/90 dark:border-l-rose-400/90",
 };
 

@@ -1,5 +1,5 @@
 /**
- * Pipeline heat: top bands are closest to an offer; bottom is quiet / early.
+ * Pipeline heat: top bands are closest to an offer; bottom is waiting (split by stage).
  * `stale` is appended last by `groupApplicationsByPipelineBandWithStale` only.
  */
 
@@ -15,7 +15,10 @@ export const PIPELINE_STAGES_TOP_FIRST = [
 
 export type PipelineStageName = (typeof PIPELINE_STAGES_TOP_FIRST)[number];
 
-export type PipelineBandKey = PipelineStageName | "quiet" | "stale";
+/** Waiting buckets: split by stage so Screening ≠ Applied on the board. */
+export type PipelineWaitingBandKey = "screeningWaiting" | "appliedWaiting";
+
+export type PipelineBandKey = PipelineStageName | PipelineWaitingBandKey | "stale";
 
 /** Bands used by assignPipelineBand / core grouping (excludes `stale`). */
 export const PIPELINE_CORE_BAND_ORDER: Exclude<PipelineBandKey, "stale">[] = [
@@ -23,8 +26,9 @@ export const PIPELINE_CORE_BAND_ORDER: Exclude<PipelineBandKey, "stale">[] = [
   "Final Round",
   "Interview",
   "Screening",
+  "screeningWaiting",
   "Applied",
-  "quiet",
+  "appliedWaiting",
 ];
 
 /** @deprecated Use PIPELINE_CORE_BAND_ORDER; kept for clarity in imports. */
@@ -33,10 +37,13 @@ export const PIPELINE_BAND_ORDER = PIPELINE_CORE_BAND_ORDER;
 export const BAND_DESCRIPTIONS: Record<PipelineBandKey, string> = {
   Offer: "Offers in hand or final negotiations",
   "Final Round": "Late-stage interviews",
-  Interview: "Interview rounds",
-  Screening: "Screening & early calls scheduled",
-  Applied: "Applied with upcoming activity",
-  quiet: "No screening or interviews scheduled yet — follow up when ready",
+  Interview: "Interview rounds (stage is Interview)",
+  Screening: "Screening stage with at least one upcoming call on the calendar",
+  screeningWaiting:
+    "Screening stage but no future call logged — add a screening/interview event or follow up",
+  Applied: "Applied with at least one upcoming call on the calendar",
+  appliedWaiting:
+    "Applied (or unset stage) with no future calls yet — schedule screening/interview or follow up",
   stale: `Applied at least ${STALE_APPLICATION_IDLE_DAYS} days ago with nothing scheduled — archive if the role is closed.`,
 };
 
@@ -80,7 +87,7 @@ export function normalizeApplicationStage(stage: string | null | undefined): str
 
 /**
  * Assign each application to a vertical band. Late stages always show in their band.
- * Applied / Screening without any future scheduled event go to `quiet`.
+ * Screening vs Applied waiting buckets are separate so the board matches pipeline stage.
  */
 export function assignPipelineBand(
   stage: string | null | undefined,
@@ -93,13 +100,17 @@ export function assignPipelineBand(
   if (s === "Offer" || s === "Final Round" || s === "Interview") {
     return s;
   }
-  if (s === "Applied" || s === "Screening") {
-    if (hasUpcoming) return s;
-    return "quiet";
+  if (s === "Screening") {
+    if (hasUpcoming) return "Screening";
+    return "screeningWaiting";
+  }
+  if (s === "Applied") {
+    if (hasUpcoming) return "Applied";
+    return "appliedWaiting";
   }
   // Unknown stage: treat like Applied
   if (hasUpcoming) return "Applied";
-  return "quiet";
+  return "appliedWaiting";
 }
 
 export function sortWithinBand<T extends { scheduledEvents: { scheduledAt: string }[]; appliedAt: string | null }>(

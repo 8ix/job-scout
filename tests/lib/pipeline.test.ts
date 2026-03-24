@@ -32,14 +32,35 @@ describe("pipeline", () => {
     ).toBe("Applied");
   });
 
-  it("assigns Applied with only past events to quiet", () => {
+  it("assigns Applied with only past events to appliedWaiting", () => {
     expect(
       assignPipelineBand("Applied", [{ scheduledAt: past(1) }], now)
-    ).toBe("quiet");
+    ).toBe("appliedWaiting");
   });
 
-  it("assigns Screening without upcoming to quiet", () => {
-    expect(assignPipelineBand("Screening", [], now)).toBe("quiet");
+  it("assigns Screening without upcoming to screeningWaiting", () => {
+    expect(assignPipelineBand("Screening", [], now)).toBe("screeningWaiting");
+  });
+
+  it("places screeningWaiting above appliedWaiting (heat order)", () => {
+    const apps = [
+      {
+        id: "ap",
+        stage: "Applied",
+        appliedAt: "2026-01-01T00:00:00.000Z",
+        scheduledEvents: [] as { scheduledAt: string }[],
+      },
+      {
+        id: "sc",
+        stage: "Screening",
+        appliedAt: "2026-01-02T00:00:00.000Z",
+        scheduledEvents: [] as { scheduledAt: string }[],
+      },
+    ];
+    const groups = groupApplicationsByPipelineBand(apps, now);
+    expect(groups.map((g) => g.band)).toEqual(["screeningWaiting", "appliedWaiting"]);
+    expect(groups[0].applications.map((a) => a.id)).toEqual(["sc"]);
+    expect(groups[1].applications.map((a) => a.id)).toEqual(["ap"]);
   });
 
   it("groups bands in heat order with non-empty bands only", () => {
@@ -64,7 +85,7 @@ describe("pipeline", () => {
       },
     ];
     const groups = groupApplicationsByPipelineBand(apps, now);
-    expect(groups.map((g) => g.band)).toEqual(["Offer", "Applied", "quiet"]);
+    expect(groups.map((g) => g.band)).toEqual(["Offer", "Applied", "appliedWaiting"]);
     expect(groups[0].applications.map((a) => a.id)).toEqual(["1"]);
     expect(groups[1].applications.map((a) => a.id)).toEqual(["2"]);
     expect(groups[2].applications.map((a) => a.id)).toEqual(["3"]);
@@ -119,7 +140,7 @@ describe("pipeline", () => {
       },
     ];
     const groups = groupApplicationsByPipelineBandWithStale(apps, now);
-    expect(groups.map((g) => g.band)).toEqual(["Applied", "quiet", "stale"]);
+    expect(groups.map((g) => g.band)).toEqual(["Applied", "appliedWaiting", "stale"]);
     expect(groups[0].applications.map((a) => a.id)).toEqual(["old-but-interview"]);
     expect(groups[1].applications.map((a) => a.id)).toEqual(["fresh-quiet"]);
     expect(groups[2].applications.map((a) => a.id)).toEqual(["stale-idle"]);

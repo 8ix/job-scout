@@ -20,9 +20,10 @@ const BAND_TITLES: Record<PipelineBandKey, string> = {
   Offer: "Offer",
   "Final Round": "Final round",
   Interview: "Interview",
-  Screening: "Screening",
-  Applied: "Applied — with upcoming activity",
-  quiet: "Waiting — no upcoming calls",
+  Screening: "Screening — upcoming call",
+  screeningWaiting: "Screening — no upcoming call",
+  Applied: "Applied — upcoming call",
+  appliedWaiting: "Applied — no upcoming call",
   stale: "Stale — consider archiving",
 };
 
@@ -52,9 +53,11 @@ export function ApplicationsPipeline({ applications }: ApplicationsPipelineProps
     <>
       <p className="text-sm text-muted-foreground">
         Pipeline uses <strong>{stageCount}</strong> distinct stage
-        {stageCount === 1 ? "" : "s"} on this page. Top sections are closest to an offer. The{" "}
-        <strong>Stale</strong> section at the bottom lists idle applications (no upcoming calls,{" "}
-        applied {STALE_APPLICATION_IDLE_DAYS}+ days ago) — archive there if the role is dead.
+        {stageCount === 1 ? "" : "s"} on this page. Top sections are closest to an offer.{" "}
+        <strong>Interview</strong> is its own column. <strong>Screening</strong> vs{" "}
+        <strong>Applied</strong> waiting lists are separate (no future event on the calendar). The{" "}
+        <strong>Stale</strong> section lists idle applications (no upcoming calls, applied{" "}
+        {STALE_APPLICATION_IDLE_DAYS}+ days ago).
       </p>
 
       <div className="space-y-10">
