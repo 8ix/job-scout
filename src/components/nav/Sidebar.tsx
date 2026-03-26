@@ -10,7 +10,7 @@ const navItems = [
   { href: "/opportunities", label: "Opportunities", icon: "💼", countKey: "opportunities" as const },
   { href: "/applications", label: "Applications", icon: "📋", countKey: "applications" as const },
   { href: "/rejections", label: "Disqualified", icon: "🚫", countKey: "rejections" as const },
-  { href: "/prompts", label: "Prompts", icon: "📝", countKey: null },
+  { href: "/search-criteria", label: "Search criteria", icon: "🎯", countKey: null },
   { href: "/feeds", label: "Feeds", icon: "📡", countKey: "feeds" as const },
   { href: "/ingest-blocklist", label: "Blocklist", icon: "🧱", countKey: null },
 ];

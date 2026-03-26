@@ -19,14 +19,10 @@ export const prismaMock = {
     update: vi.fn(),
     deleteMany: vi.fn(),
   },
-  systemPrompt: {
-    create: vi.fn(),
-    findFirst: vi.fn(),
+  searchCriteriaSettings: {
     findUnique: vi.fn(),
-    findMany: vi.fn(),
-    update: vi.fn(),
-    updateMany: vi.fn(),
-    deleteMany: vi.fn(),
+    create: vi.fn(),
+    upsert: vi.fn(),
   },
   feed: {
     create: vi.fn(),

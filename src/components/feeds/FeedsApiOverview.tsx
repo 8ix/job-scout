@@ -53,8 +53,8 @@ export function FeedsApiOverview() {
             listings.
           </li>
           <li>
-            Optional: <code className="text-xs">GET /api/prompts/active</code> to fetch the active
-            scoring prompt (no API key).
+            Optional: <code className="text-xs">GET /api/prompts/active</code> to fetch the generated
+            scoring system prompt from saved search criteria (no API key).
           </li>
         </ol>
       </div>

@@ -123,16 +123,14 @@ model Rejection {
   @@map("rejections")
 }
 
-model SystemPrompt {
-  id                 String   @id @default(uuid())
-  name               String
-  systemPrompt       String
-  userPromptTemplate String
-  isActive           Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  notes              String?
+/** Singleton (id = "default"): structured search criteria; systemPrompt cached from criteria on save. */
+model SearchCriteriaSettings {
+  id           String   @id @default("default")
+  criteria     Json
+  systemPrompt String   @db.Text
+  updatedAt    DateTime @updatedAt
 
-  @@map("system_prompts")
+  @@map("search_criteria_settings")
 }
 
 model Feed {

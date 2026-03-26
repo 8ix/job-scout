@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { emptySearchCriteria } from "@/lib/search-criteria/schema";
 
 export function buildOpportunity(overrides: Record<string, unknown> = {}) {
   return {
@@ -42,15 +43,12 @@ export function buildRejection(overrides: Record<string, unknown> = {}) {
   };
 }
 
-export function buildSystemPrompt(overrides: Record<string, unknown> = {}) {
+export function buildSearchCriteriaSettingsRow(overrides: Record<string, unknown> = {}) {
   return {
-    id: randomUUID(),
-    name: "Main scoring prompt v1",
-    systemPrompt: "You are a job scoring assistant...",
-    userPromptTemplate: "Score this job: {{title}} at {{company}}",
-    isActive: false,
-    createdAt: new Date(),
-    notes: null,
+    id: "default",
+    criteria: emptySearchCriteria(),
+    systemPrompt: "",
+    updatedAt: new Date(),
     ...overrides,
   };
 }

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prismaMock } from "../helpers/prisma";
-import { buildSystemPrompt } from "../helpers/factories";
+import { buildSearchCriteriaSettingsRow } from "../helpers/factories";
+import { buildSystemPrompt, emptySearchCriteria } from "@/lib/search-criteria";
 
 vi.stubEnv("API_KEY", "test-key");
 vi.stubEnv("NEXTAUTH_SECRET", "test-secret");
@@ -16,240 +17,126 @@ describe("GET /api/prompts/active", () => {
     vi.clearAllMocks();
   });
 
-  it("returns the active prompt without auth", async () => {
-    const active = buildSystemPrompt({ isActive: true, id: "active-id" });
-    prismaMock.systemPrompt.findFirst.mockResolvedValue(active);
+  it("returns generated system prompt without auth", async () => {
+    const criteria = emptySearchCriteria();
+    criteria.whereWork.positive.push("Remote-first");
+    const row = buildSearchCriteriaSettingsRow({ criteria });
+    prismaMock.searchCriteriaSettings.findUnique.mockResolvedValue(row);
 
     const { GET } = await import("@/app/api/prompts/active/route");
     const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.id).toBe("active-id");
-    expect(body.isActive).toBe(true);
+    expect(body.systemPrompt).toBe(buildSystemPrompt(criteria));
+    expect(body.updatedAt).toBeDefined();
+    expect(body.userPromptTemplate).toBeUndefined();
   });
 
-  it("returns 404 when no active prompt exists", async () => {
-    prismaMock.systemPrompt.findFirst.mockResolvedValue(null);
+  it("creates default row when missing then returns prompt", async () => {
+    const created = buildSearchCriteriaSettingsRow({
+      systemPrompt: buildSystemPrompt(emptySearchCriteria()),
+    });
+    prismaMock.searchCriteriaSettings.findUnique.mockResolvedValue(null);
+    prismaMock.searchCriteriaSettings.create.mockResolvedValue(created);
 
     const { GET } = await import("@/app/api/prompts/active/route");
     const response = await GET();
+    const body = await response.json();
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(200);
+    expect(body.systemPrompt).toBe(buildSystemPrompt(emptySearchCriteria()));
+    expect(prismaMock.searchCriteriaSettings.create).toHaveBeenCalled();
   });
 });
 
-describe("GET /api/prompts", () => {
+describe("GET /api/search-criteria", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetServerSession.mockResolvedValue({ user: { name: "admin" } });
   });
 
-  it("returns all prompt versions", async () => {
-    const prompts = [
-      buildSystemPrompt({ isActive: true }),
-      buildSystemPrompt({ isActive: false }),
-    ];
-    prismaMock.systemPrompt.findMany.mockResolvedValue(prompts);
+  it("returns criteria and system prompt", async () => {
+    const criteria = structuredClone(emptySearchCriteria());
+    criteria.compensation.positive.push("£80k+");
+    const row = buildSearchCriteriaSettingsRow({
+      criteria,
+      systemPrompt: buildSystemPrompt(criteria),
+    });
+    prismaMock.searchCriteriaSettings.findUnique.mockResolvedValue(row);
 
-    const { GET } = await import("@/app/api/prompts/route");
-    const request = new Request("http://localhost/api/prompts");
-    const response = await GET(request);
+    const { GET } = await import("@/app/api/search-criteria/route");
+    const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toHaveLength(2);
+    expect(body.criteria.compensation.positive).toContain("£80k+");
+    expect(body.systemPrompt).toContain("£80k+");
   });
 
   it("returns 401 without session", async () => {
     mockGetServerSession.mockResolvedValue(null);
 
-    const { GET } = await import("@/app/api/prompts/route");
-    const request = new Request("http://localhost/api/prompts");
-    const response = await GET(request);
+    const { GET } = await import("@/app/api/search-criteria/route");
+    const response = await GET();
 
     expect(response.status).toBe(401);
   });
 });
 
-describe("POST /api/prompts", () => {
+describe("PATCH /api/search-criteria", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetServerSession.mockResolvedValue({ user: { name: "admin" } });
   });
 
-  it("creates a new prompt version without activating it", async () => {
-    const input = {
-      name: "Scoring v2",
-      systemPrompt: "You are a scoring assistant",
-      userPromptTemplate: "Score: {{title}}",
-      notes: "Updated scoring criteria",
-    };
-    const created = buildSystemPrompt({ ...input, id: "new-id", isActive: false });
-    prismaMock.systemPrompt.create.mockResolvedValue(created);
+  it("upserts criteria and returns saved row", async () => {
+    const criteria = emptySearchCriteria();
+    criteria.role.positive.push("Engineering Manager");
+    const updated = buildSearchCriteriaSettingsRow({
+      criteria,
+      systemPrompt: buildSystemPrompt(criteria),
+    });
+    prismaMock.searchCriteriaSettings.upsert.mockResolvedValue(updated);
 
-    const { POST } = await import("@/app/api/prompts/route");
-    const request = new Request("http://localhost/api/prompts", {
-      method: "POST",
+    const { PATCH } = await import("@/app/api/search-criteria/route");
+    const request = new Request("http://localhost/api/search-criteria", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
+      body: JSON.stringify(criteria),
     });
 
-    const response = await POST(request);
+    const response = await PATCH(request);
     const body = await response.json();
 
-    expect(response.status).toBe(201);
-    expect(body.isActive).toBe(false);
-    expect(body.name).toBe("Scoring v2");
+    expect(response.status).toBe(200);
+    expect(body.criteria.role.positive).toContain("Engineering Manager");
+    expect(prismaMock.searchCriteriaSettings.upsert).toHaveBeenCalled();
   });
 
-  it("returns 400 for missing required fields", async () => {
-    const { POST } = await import("@/app/api/prompts/route");
-    const request = new Request("http://localhost/api/prompts", {
-      method: "POST",
+  it("returns 400 for invalid body", async () => {
+    const { PATCH } = await import("@/app/api/search-criteria/route");
+    const request = new Request("http://localhost/api/search-criteria", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "Incomplete" }),
+      body: JSON.stringify({ whereWork: "oops" }),
     });
 
-    const response = await POST(request);
+    const response = await PATCH(request);
     expect(response.status).toBe(400);
   });
-});
-
-describe("PATCH /api/prompts/:id/activate", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockGetServerSession.mockResolvedValue({ user: { name: "admin" } });
-  });
-
-  it("activates a prompt and deactivates all others", async () => {
-    const activated = buildSystemPrompt({ id: "target-id", isActive: true });
-    prismaMock.systemPrompt.updateMany.mockResolvedValue({ count: 5 });
-    prismaMock.systemPrompt.update.mockResolvedValue(activated);
-
-    const { PATCH } = await import("@/app/api/prompts/[id]/activate/route");
-    const request = new Request("http://localhost/api/prompts/target-id/activate", {
-      method: "PATCH",
-    });
-
-    const response = await PATCH(request, { params: Promise.resolve({ id: "target-id" }) });
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body.isActive).toBe(true);
-    expect(prismaMock.systemPrompt.updateMany).toHaveBeenCalledWith({
-      data: { isActive: false },
-    });
-    expect(prismaMock.systemPrompt.update).toHaveBeenCalledWith({
-      where: { id: "target-id" },
-      data: { isActive: true },
-    });
-  });
-
-  it("returns 404 when prompt does not exist", async () => {
-    const prismaError = new Error("Record not found");
-    Object.assign(prismaError, { code: "P2025" });
-    prismaMock.systemPrompt.updateMany.mockResolvedValue({ count: 0 });
-    prismaMock.systemPrompt.update.mockRejectedValue(prismaError);
-
-    const { PATCH } = await import("@/app/api/prompts/[id]/activate/route");
-    const request = new Request("http://localhost/api/prompts/non-existent/activate", {
-      method: "PATCH",
-    });
-
-    const response = await PATCH(request, { params: Promise.resolve({ id: "non-existent" }) });
-    expect(response.status).toBe(404);
-    const body = await response.json();
-    expect(body.error).toBe("Not found");
-  });
 
   it("returns 401 without session", async () => {
     mockGetServerSession.mockResolvedValue(null);
 
-    const { PATCH } = await import("@/app/api/prompts/[id]/activate/route");
-    const request = new Request("http://localhost/api/prompts/target-id/activate", {
-      method: "PATCH",
-    });
-
-    const response = await PATCH(request, { params: Promise.resolve({ id: "target-id" }) });
-    expect(response.status).toBe(401);
-  });
-});
-
-describe("PATCH /api/prompts/:id", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockGetServerSession.mockResolvedValue({ user: { name: "admin" } });
-  });
-
-  it("updates a prompt including when active", async () => {
-    const existing = buildSystemPrompt({
-      id: "prompt-id",
-      name: "v1",
-      systemPrompt: "Old system",
-      userPromptTemplate: "Old template",
-      isActive: true,
-    });
-    const updated = buildSystemPrompt({
-      ...existing,
-      name: "v1 updated",
-      systemPrompt: "New system",
-      userPromptTemplate: "New template",
-    });
-    prismaMock.systemPrompt.findUnique.mockResolvedValue(existing);
-    prismaMock.systemPrompt.update.mockResolvedValue(updated);
-
-    const { PATCH } = await import("@/app/api/prompts/[id]/route");
-    const request = new Request("http://localhost/api/prompts/prompt-id", {
+    const { PATCH } = await import("@/app/api/search-criteria/route");
+    const request = new Request("http://localhost/api/search-criteria", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: "v1 updated",
-        systemPrompt: "New system",
-        userPromptTemplate: "New template",
-      }),
+      body: JSON.stringify(emptySearchCriteria()),
     });
 
-    const response = await PATCH(request, { params: Promise.resolve({ id: "prompt-id" }) });
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body.name).toBe("v1 updated");
-    expect(prismaMock.systemPrompt.update).toHaveBeenCalledWith({
-      where: { id: "prompt-id" },
-      data: {
-        name: "v1 updated",
-        systemPrompt: "New system",
-        userPromptTemplate: "New template",
-      },
-    });
-  });
-
-  it("returns 404 when prompt does not exist", async () => {
-    prismaMock.systemPrompt.findUnique.mockResolvedValue(null);
-
-    const { PATCH } = await import("@/app/api/prompts/[id]/route");
-    const request = new Request("http://localhost/api/prompts/missing", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ systemPrompt: "Updated" }),
-    });
-
-    const response = await PATCH(request, { params: Promise.resolve({ id: "missing" }) });
-    expect(response.status).toBe(404);
-  });
-
-  it("returns 401 without session", async () => {
-    mockGetServerSession.mockResolvedValue(null);
-
-    const { PATCH } = await import("@/app/api/prompts/[id]/route");
-    const request = new Request("http://localhost/api/prompts/prompt-id", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ systemPrompt: "Updated" }),
-    });
-
-    const response = await PATCH(request, { params: Promise.resolve({ id: "prompt-id" }) });
+    const response = await PATCH(request);
     expect(response.status).toBe(401);
   });
 });

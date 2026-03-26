@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { resolvedSystemPrompt, ensureSearchCriteriaSettings } from "@/lib/search-criteria/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const prompt = await prisma.systemPrompt.findFirst({
-    where: { isActive: true },
+  const row = await ensureSearchCriteriaSettings();
+  const systemPrompt = resolvedSystemPrompt(row.criteria);
+
+  return NextResponse.json({
+    systemPrompt,
+    updatedAt: row.updatedAt.toISOString(),
   });
-
-  if (!prompt) {
-    return NextResponse.json({ error: "No active prompt found" }, { status: 404 });
-  }
-
-  return NextResponse.json(prompt);
 }

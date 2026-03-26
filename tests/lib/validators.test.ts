@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createOpportunitySchema, updateOpportunitySchema } from "@/lib/validators/opportunity";
 import { createRejectionSchema } from "@/lib/validators/rejection";
-import { createPromptSchema } from "@/lib/validators/prompt";
-
 describe("createOpportunitySchema", () => {
   const valid = {
     jobId: "abc123",
@@ -93,22 +91,3 @@ describe("createRejectionSchema", () => {
   });
 });
 
-describe("createPromptSchema", () => {
-  it("accepts valid input", () => {
-    const result = createPromptSchema.safeParse({
-      name: "v1",
-      systemPrompt: "Prompt text",
-      userPromptTemplate: "Template",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects empty name", () => {
-    const result = createPromptSchema.safeParse({
-      name: "",
-      systemPrompt: "Prompt text",
-      userPromptTemplate: "Template",
-    });
-    expect(result.success).toBe(false);
-  });
-});

@@ -16,7 +16,7 @@ This follows a **headless / composable architecture** pattern: Job Scout is the 
 
 ## What it is (and isn’t)
 
-- **What it is:** A **data store** plus a **web UI** for managing opportunities, applications, disqualified listings, feeds, and prompts. You send structured data in (typically from automation you control); Job Scout persists it and helps you review, track, and act on it.
+- **What it is:** A **data store** plus a **web UI** for managing opportunities, applications, disqualified listings, feeds, and **search criteria** (the structured inputs that assemble your scoring system prompt). You send structured data in (typically from automation you control); Job Scout persists it and helps you review, track, and act on it.
 - **What it isn’t:** A complete “job hunt in a box.” It does **not** embed your scraping rules, board-specific filters, or scoring brains. Those live **outside** the app—on purpose.
 
 That intentional gap is the point: **bring your own logic** (workflows, scripts, LLMs, whatever fits you). Tools like **[n8n](https://n8n.io/)** are a natural fit: poll or scrape job boards, dedupe, score or classify roles, then **POST** scored **opportunities** or **disqualified** listings straight into the API. You can run **many feeds** with **different strategies** without changing Job Scout’s codebase each time—only your automation changes.
@@ -135,7 +135,7 @@ Typical flow: your automation calls these with `X-API-Key`. Dashboard **feed hea
 - `POST /api/opportunities` — Ingest scored job
 - `POST /api/rejections` — Ingest disqualified job listing (stored as a rejection record; dashboard UI labels this **Disqualified**)
 - `POST /api/seen-ids` — Batch deduplication check
-- `GET /api/prompts/active` — Active scoring prompt (no auth)
+- `GET /api/prompts/active` — Generated scoring **system** prompt from saved search criteria (no auth; JSON includes `systemPrompt` and `updatedAt`)
 - `POST /api/applications` — Create a manual / external application (`source: manual`, optional `appliedVia`, defaults to `External`; `url` is optional—omit or `null` if you have no posting link)
 - `PATCH /api/applications/:id` — Update application fields, `status`, or `stage` (same rules as opportunity PATCH; archive/reject via `stage`)
 - `GET /api/applications/:id` — Single application with contacts, correspondence (pasted messages), stage logs, scheduled events
@@ -156,5 +156,5 @@ Session **or** API key: `POST/PATCH/DELETE` on `/api/applications*` accept eithe
 - `GET /api/opportunities`, `PATCH /api/opportunities/:id` (includes enrichment: `appliedVia`, `recruiterContact`, `fullJobSpecification`, etc.)
 - `GET /api/opportunities/:id/correspondence`, `POST /api/opportunities/:id/correspondence`, `DELETE /api/opportunities/:id/correspondence?id=…` — Log pasted email/message text on an application with a **received-at** time (session only; UI: **Applications** → application details)
 - `GET /api/rejections` (same data as the **Disqualified** page in the UI)
-- `GET /api/prompts`, `POST /api/prompts`, `PATCH /api/prompts/:id/activate`
+- `GET /api/search-criteria`, `PATCH /api/search-criteria` — Read/update search criteria (UI: **Search criteria**); criteria are merged into the template used for `GET /api/prompts/active`
 - `GET /api/stats` — includes `totalRejections` (all rows), plus `workflowRejections` vs `blockedRejections` (ingest blocklist) for dashboards; `byScore` bands are scores **6–10** only (see **Score distribution** disclaimer). `GET /api/health`
