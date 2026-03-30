@@ -1,6 +1,6 @@
 import { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
+import { verifyDashboardPassword } from "@/lib/auth/verify-dashboard-password";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -19,10 +19,7 @@ export const authOptions: NextAuthOptions = {
 
         if (credentials.username !== expectedUsername) return null;
 
-        const passwordMatch = expectedPassword.startsWith("$2")
-          ? await bcrypt.compare(credentials.password, expectedPassword)
-          : credentials.password === expectedPassword;
-
+        const passwordMatch = await verifyDashboardPassword(credentials.password);
         if (!passwordMatch) return null;
 
         return { id: "1", name: expectedUsername };

@@ -3,17 +3,17 @@
 import { useState, useMemo } from "react";
 import {
   groupApplicationsByPipelineBandWithStale,
-  BAND_DESCRIPTIONS,
+  buildBandDescriptions,
   countDistinctStages,
   type PipelineBandKey,
 } from "@/lib/applications/pipeline";
-import { STALE_APPLICATION_IDLE_DAYS } from "@/lib/constants/applications-ui";
 import type { PipelineApplication } from "./application-types";
 import { ApplicationCard } from "./ApplicationCard";
 import { ApplicationDetailsDialog } from "./ApplicationDetailsDialog";
 
 interface ApplicationsPipelineProps {
   applications: PipelineApplication[];
+  staleIdleDays: number;
 }
 
 const BAND_TITLES: Record<PipelineBandKey, string> = {
@@ -27,12 +27,14 @@ const BAND_TITLES: Record<PipelineBandKey, string> = {
   stale: "Stale — consider archiving",
 };
 
-export function ApplicationsPipeline({ applications }: ApplicationsPipelineProps) {
+export function ApplicationsPipeline({ applications, staleIdleDays }: ApplicationsPipelineProps) {
   const [detailsId, setDetailsId] = useState<string | null>(null);
 
+  const bandDescriptions = useMemo(() => buildBandDescriptions(staleIdleDays), [staleIdleDays]);
+
   const groups = useMemo(
-    () => groupApplicationsByPipelineBandWithStale(applications, new Date()),
-    [applications]
+    () => groupApplicationsByPipelineBandWithStale(applications, new Date(), staleIdleDays),
+    [applications, staleIdleDays]
   );
 
   const stageCount = useMemo(
@@ -57,7 +59,7 @@ export function ApplicationsPipeline({ applications }: ApplicationsPipelineProps
         <strong>Interview</strong> is its own column. <strong>Screening</strong> vs{" "}
         <strong>Applied</strong> waiting lists are separate (no future event on the calendar). The{" "}
         <strong>Stale</strong> section lists idle applications (no upcoming calls, applied{" "}
-        {STALE_APPLICATION_IDLE_DAYS}+ days ago).
+        {staleIdleDays}+ days ago).
       </p>
 
       <div className="space-y-10">
@@ -71,7 +73,7 @@ export function ApplicationsPipeline({ applications }: ApplicationsPipelineProps
                 {BAND_TITLES[band]}
               </h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-3xl">
-                {BAND_DESCRIPTIONS[band]}
+                {bandDescriptions[band]}
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -80,6 +82,7 @@ export function ApplicationsPipeline({ applications }: ApplicationsPipelineProps
                   key={app.id}
                   app={app}
                   band={band}
+                  staleIdleDays={staleIdleDays}
                   onOpenDetails={() => setDetailsId(app.id)}
                 />
               ))}

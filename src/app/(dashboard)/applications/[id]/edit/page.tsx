@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ManualApplicationForm } from "@/components/applications/ManualApplicationForm";
+import { closedReasonLabel } from "@/lib/applications/application-closed-reason";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -10,7 +11,51 @@ interface PageProps {
 export default async function EditApplicationPage({ params }: PageProps) {
   const { id } = await params;
   const opp = await prisma.opportunity.findUnique({ where: { id } });
-  if (!opp || opp.status !== "applied") {
+  if (!opp || !opp.appliedAt) {
+    notFound();
+  }
+
+  const isArchivedApplication =
+    opp.status === "rejected" &&
+    (opp.stage === "Archived" || opp.stage === "Rejected" || opp.stage === null);
+
+  if (isArchivedApplication) {
+    return (
+      <div className="space-y-6 max-w-xl">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/applications"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ← Applications
+          </Link>
+        </div>
+        <h2 className="text-2xl font-bold text-foreground">Closed application</h2>
+        <div className="rounded-xl border border-border bg-card p-5 space-y-2 text-sm">
+          <p className="font-semibold text-card-foreground">{opp.company}</p>
+          <p className="text-muted-foreground">{opp.title}</p>
+          <p className="text-muted-foreground">
+            Applied: {opp.appliedAt.toLocaleDateString()} · Stage: {opp.stage ?? "—"}
+          </p>
+          <p className="text-muted-foreground">
+            Outcome: {closedReasonLabel(opp.applicationClosedReason)}
+          </p>
+          {opp.url ? (
+            <a
+              href={opp.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary text-sm font-medium hover:underline inline-block pt-2"
+            >
+              Original listing
+            </a>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  if (opp.status !== "applied") {
     notFound();
   }
 

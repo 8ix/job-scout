@@ -32,6 +32,8 @@ model Opportunity {
   appliedVia           String?
   recruiterContact     String?
   fullJobSpecification String? @db.Text
+  /** Set when an application leaves active apply flow: employer_rejected | user_archived | stale_auto */
+  applicationClosedReason String? @map("application_closed_reason")
 
   contacts         ApplicationContact[]
   stageLogs        ApplicationStageLog[]
@@ -43,6 +45,7 @@ model Opportunity {
   @@index([score(sort: Desc)])
   @@index([status])
   @@index([stage])
+  @@index([applicationClosedReason])
   @@map("opportunities")
 }
 
@@ -169,4 +172,13 @@ model ApplicationGoalSettings {
   monthlyTargetCount  Int    @default(0)
 
   @@map("application_goal_settings")
+}
+
+/** Singleton (id = "default"): stale threshold and future application workflow prefs. */
+model ApplicationWorkflowSettings {
+  id             String @id @default("default")
+  /** Days since apply with no future scheduled event → stale UI + auto-archive target. */
+  staleIdleDays  Int    @default(40)
+
+  @@map("application_workflow_settings")
 }

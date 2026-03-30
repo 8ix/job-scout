@@ -66,6 +66,11 @@ export const prismaMock = {
     upsert: vi.fn(),
     update: vi.fn(),
   },
+  applicationWorkflowSettings: {
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    upsert: vi.fn(),
+  },
   $queryRaw: vi.fn(),
   $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(prismaMock)),
 };

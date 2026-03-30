@@ -13,6 +13,7 @@ const navItems = [
   { href: "/search-criteria", label: "Search criteria", icon: "🎯", countKey: null },
   { href: "/feeds", label: "Feeds", icon: "📡", countKey: "feeds" as const },
   { href: "/ingest-blocklist", label: "Blocklist", icon: "🧱", countKey: null },
+  { href: "/settings", label: "Settings", icon: "⚙️", countKey: null },
 ];
 
 interface SidebarProps {

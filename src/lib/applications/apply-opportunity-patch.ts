@@ -2,6 +2,12 @@ import type { Opportunity } from "@/generated/prisma/client";
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { UpdateOpportunityInput } from "@/lib/validators/opportunity";
 import { MISSING_LISTING_URL_PLACEHOLDER } from "@/lib/constants/missing-listing-url";
+import {
+  APPLICATION_CLOSED_REASON_EMPLOYER_REJECTED,
+  APPLICATION_CLOSED_REASON_USER_ARCHIVED,
+  REJECTION_REDFLAGS_EMPLOYER,
+  REJECTION_REDFLAGS_USER_ARCHIVED,
+} from "@/lib/applications/application-closed-reason";
 
 type Result =
   | { ok: true; opportunity: Opportunity }
@@ -61,6 +67,12 @@ export async function applyOpportunityPatch(
     if (parsed.stage === "Rejected" || parsed.stage === "Archived") {
       data.status = "rejected";
     }
+    if (parsed.stage === "Rejected") {
+      data.applicationClosedReason = APPLICATION_CLOSED_REASON_EMPLOYER_REJECTED;
+    }
+    if (parsed.stage === "Archived") {
+      data.applicationClosedReason = APPLICATION_CLOSED_REASON_USER_ARCHIVED;
+    }
   }
 
   if (Object.keys(data).length === 0) {
@@ -92,8 +104,8 @@ export async function applyOpportunityPatch(
   ) {
     const redFlags =
       parsed.stage === "Rejected"
-        ? "Organization rejected our application"
-        : "Application went stale - archived";
+        ? REJECTION_REDFLAGS_EMPLOYER
+        : REJECTION_REDFLAGS_USER_ARCHIVED;
     await prisma.rejection.create({
       data: {
         jobId: existing.jobId,

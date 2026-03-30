@@ -436,6 +436,7 @@ describe("PATCH /api/opportunities/:id", () => {
     const updateCall = prismaMock.opportunity.update.mock.calls[0][0];
     expect(updateCall.data.status).toBe("rejected");
     expect(updateCall.data.stage).toBe("Rejected");
+    expect(updateCall.data.applicationClosedReason).toBe("employer_rejected");
 
     expect(prismaMock.rejection.create).toHaveBeenCalledWith({
       data: {
@@ -505,7 +506,7 @@ describe("PATCH /api/opportunities/:id", () => {
     expect(prismaMock.rejection.create).not.toHaveBeenCalled();
   });
 
-  it("sets stage to Archived, creates Rejection with stale reason, and sets status to rejected", async () => {
+  it("sets stage to Archived, creates Rejection with user-archived reason, and sets status to rejected", async () => {
     const existing = buildOpportunity({
       id: "test-id",
       status: "applied",
@@ -532,7 +533,7 @@ describe("PATCH /api/opportunities/:id", () => {
       company: "Beta Inc",
       url: "https://example.com/job2",
       score: 7,
-      redFlags: "Application went stale - archived",
+      redFlags: "Archived by user",
       createdAt: new Date(),
     });
 
@@ -549,6 +550,7 @@ describe("PATCH /api/opportunities/:id", () => {
     const updateCall = prismaMock.opportunity.update.mock.calls[0][0];
     expect(updateCall.data.status).toBe("rejected");
     expect(updateCall.data.stage).toBe("Archived");
+    expect(updateCall.data.applicationClosedReason).toBe("user_archived");
 
     expect(prismaMock.rejection.create).toHaveBeenCalledWith({
       data: {
@@ -558,7 +560,7 @@ describe("PATCH /api/opportunities/:id", () => {
         company: "Beta Inc",
         url: "https://example.com/job2",
         score: 7,
-        redFlags: "Application went stale - archived",
+        redFlags: "Archived by user",
       },
     });
   });

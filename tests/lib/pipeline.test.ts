@@ -97,7 +97,7 @@ describe("pipeline", () => {
     ).toBe(2);
   });
 
-  it("isStaleIdleApplication when old apply and no upcoming events", () => {
+  it("isStaleIdleApplication when old apply and no upcoming events (default 40d threshold)", () => {
     expect(
       isStaleIdleApplication(
         { appliedAt: past(70), scheduledEvents: [] },
@@ -116,6 +116,9 @@ describe("pipeline", () => {
         now
       )
     ).toBe(false);
+    expect(
+      isStaleIdleApplication({ appliedAt: past(25), scheduledEvents: [] }, now, 20)
+    ).toBe(true);
   });
 
   it("groupApplicationsByPipelineBandWithStale moves stale idle apps to last section only", () => {
@@ -139,7 +142,7 @@ describe("pipeline", () => {
         scheduledEvents: [{ scheduledAt: future(1) }],
       },
     ];
-    const groups = groupApplicationsByPipelineBandWithStale(apps, now);
+    const groups = groupApplicationsByPipelineBandWithStale(apps, now, 40);
     expect(groups.map((g) => g.band)).toEqual(["Applied", "appliedWaiting", "stale"]);
     expect(groups[0].applications.map((a) => a.id)).toEqual(["old-but-interview"]);
     expect(groups[1].applications.map((a) => a.id)).toEqual(["fresh-quiet"]);

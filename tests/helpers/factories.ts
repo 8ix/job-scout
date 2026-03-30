@@ -22,8 +22,12 @@ export function buildOpportunity(overrides: Record<string, unknown> = {}) {
     status: "new",
     appliedAt: null,
     stage: null,
+    applicationClosedReason: null,
     createdAt: new Date(),
     postedAt: new Date(),
+    appliedVia: null,
+    recruiterContact: null,
+    fullJobSpecification: null,
     ...overrides,
   };
 }

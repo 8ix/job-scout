@@ -3,7 +3,7 @@
  * `stale` is appended last by `groupApplicationsByPipelineBandWithStale` only.
  */
 
-import { STALE_APPLICATION_IDLE_DAYS } from "@/lib/constants/applications-ui";
+import { DEFAULT_STALE_IDLE_DAYS } from "@/lib/constants/applications-ui";
 
 export const PIPELINE_STAGES_TOP_FIRST = [
   "Offer",
@@ -34,18 +34,24 @@ export const PIPELINE_CORE_BAND_ORDER: Exclude<PipelineBandKey, "stale">[] = [
 /** @deprecated Use PIPELINE_CORE_BAND_ORDER; kept for clarity in imports. */
 export const PIPELINE_BAND_ORDER = PIPELINE_CORE_BAND_ORDER;
 
-export const BAND_DESCRIPTIONS: Record<PipelineBandKey, string> = {
-  Offer: "Offers in hand or final negotiations",
-  "Final Round": "Late-stage interviews",
-  Interview: "Interview rounds (stage is Interview)",
-  Screening: "Screening stage with at least one upcoming call on the calendar",
-  screeningWaiting:
-    "Screening stage but no future call logged — add a screening/interview event or follow up",
-  Applied: "Applied with at least one upcoming call on the calendar",
-  appliedWaiting:
-    "Applied (or unset stage) with no future calls yet — schedule screening/interview or follow up",
-  stale: `Applied at least ${STALE_APPLICATION_IDLE_DAYS} days ago with nothing scheduled — archive if the role is closed.`,
-};
+export function buildBandDescriptions(staleIdleDays: number): Record<PipelineBandKey, string> {
+  return {
+    Offer: "Offers in hand or final negotiations",
+    "Final Round": "Late-stage interviews",
+    Interview: "Interview rounds (stage is Interview)",
+    Screening: "Screening stage with at least one upcoming call on the calendar",
+    screeningWaiting:
+      "Screening stage but no future call logged — add a screening/interview event or follow up",
+    Applied: "Applied with at least one upcoming call on the calendar",
+    appliedWaiting:
+      "Applied (or unset stage) with no future calls yet — schedule screening/interview or follow up",
+    stale: `Applied at least ${staleIdleDays} days ago with nothing scheduled — archive if the role is closed.`,
+  };
+}
+
+/** @deprecated Use buildBandDescriptions(staleIdleDays). */
+export const BAND_DESCRIPTIONS: Record<PipelineBandKey, string> =
+  buildBandDescriptions(DEFAULT_STALE_IDLE_DAYS);
 
 function nextUpcomingEvent(
   scheduledEvents: { scheduledAt: string }[],
@@ -70,13 +76,14 @@ export function hasUpcomingScheduledEvent(
  */
 export function isStaleIdleApplication(
   app: { appliedAt: string | null; scheduledEvents: { scheduledAt: string }[] },
-  now: Date
+  now: Date,
+  staleIdleDays: number = DEFAULT_STALE_IDLE_DAYS
 ): boolean {
   if (!app.appliedAt) return false;
   if (hasUpcomingScheduledEvent(app.scheduledEvents, now)) return false;
   const appliedMs = new Date(app.appliedAt).getTime();
   const days = (now.getTime() - appliedMs) / (1000 * 60 * 60 * 24);
-  return days >= STALE_APPLICATION_IDLE_DAYS;
+  return days >= staleIdleDays;
 }
 
 export function normalizeApplicationStage(stage: string | null | undefined): string {
@@ -169,11 +176,15 @@ export function groupApplicationsByPipelineBandWithStale<
     scheduledEvents: { scheduledAt: string }[];
     appliedAt: string | null;
   },
->(applications: T[], now: Date = new Date()): { band: PipelineBandKey; applications: T[] }[] {
+>(
+  applications: T[],
+  now: Date = new Date(),
+  staleIdleDays: number = DEFAULT_STALE_IDLE_DAYS
+): { band: PipelineBandKey; applications: T[] }[] {
   const stale: T[] = [];
   const active: T[] = [];
   for (const app of applications) {
-    if (isStaleIdleApplication(app, now)) stale.push(app);
+    if (isStaleIdleApplication(app, now, staleIdleDays)) stale.push(app);
     else active.push(app);
   }
 

@@ -28,20 +28,20 @@ function buildApp(overrides: Partial<PipelineApplication> = {}): PipelineApplica
 
 describe("ApplicationsPipeline", () => {
   it("shows empty pipeline message when no applications", () => {
-    const { container } = render(<ApplicationsPipeline applications={[]} />);
+    const { container } = render(<ApplicationsPipeline applications={[]} staleIdleDays={40} />);
     expect(container.firstChild).toBeNull();
   });
 
   it("renders band heading and company for an Offer-stage application", () => {
     const apps = [buildApp({ id: "o1", stage: "Offer", company: "BigCo" })];
-    render(<ApplicationsPipeline applications={apps} />);
+    render(<ApplicationsPipeline applications={apps} staleIdleDays={40} />);
     expect(screen.getByRole("heading", { level: 3, name: "Offer" })).toBeInTheDocument();
     expect(screen.getByText("BigCo")).toBeInTheDocument();
   });
 
   it("renders Details button on card", () => {
     const apps = [buildApp({ stage: "Interview" })];
-    render(<ApplicationsPipeline applications={apps} />);
+    render(<ApplicationsPipeline applications={apps} staleIdleDays={40} />);
     expect(screen.getByRole("button", { name: /details/i })).toBeInTheDocument();
   });
 });

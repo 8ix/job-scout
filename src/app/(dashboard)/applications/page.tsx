@@ -2,14 +2,48 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ApplicationsPipeline } from "@/components/applications/ApplicationsPipeline";
 import { ApplicationsCsvImport } from "@/components/applications/ApplicationsCsvImport";
+import { ApplicationsArchiveSection } from "@/components/applications/ApplicationsArchiveSection";
+import { ApplicationsArchiveStats } from "@/components/applications/ApplicationsArchiveStats";
+import { getStaleIdleDays } from "@/lib/applications/workflowSettings";
+import { summarizeArchivedApplications } from "@/lib/applications/archived-stats";
 
 export const dynamic = "force-dynamic";
 
 export default async function ApplicationsPage() {
-  const opportunities = await prisma.opportunity.findMany({
-    where: { status: "applied" },
-    orderBy: { appliedAt: "desc" },
-  });
+  const [staleIdleDays, opportunities, archivedOpportunities] = await Promise.all([
+    getStaleIdleDays(),
+    prisma.opportunity.findMany({
+      where: { status: "applied" },
+      orderBy: { appliedAt: "desc" },
+    }),
+    prisma.opportunity.findMany({
+      where: {
+        status: "rejected",
+        appliedAt: { not: null },
+        OR: [{ stage: { in: ["Archived", "Rejected"] } }, { stage: null }],
+      },
+      orderBy: { appliedAt: "desc" },
+      include: {
+        stageLogs: { orderBy: { createdAt: "asc" } },
+      },
+    }),
+  ]);
+
+  const archivedSummary = summarizeArchivedApplications(
+    archivedOpportunities.map((o) => ({
+      applicationClosedReason: o.applicationClosedReason,
+      stageLogs: o.stageLogs.map((l) => ({ stage: l.stage })),
+    }))
+  );
+
+  const archivedRows = archivedOpportunities.map((o) => ({
+    id: o.id,
+    title: o.title,
+    company: o.company,
+    appliedAt: o.appliedAt?.toISOString() ?? null,
+    stage: o.stage,
+    applicationClosedReason: o.applicationClosedReason,
+  }));
 
   const ids = opportunities.map((o) => o.id);
   const [contacts, scheduledEvents, stageLogs, correspondenceRows] =
@@ -136,7 +170,7 @@ export default async function ApplicationsPage() {
         <div className="rounded-xl border border-border bg-card p-12 text-center space-y-3">
           <p className="text-muted-foreground">
             No active applications. Mark opportunities as applied from Opportunities, or add an
-            external application.
+            external application. Closed applications appear below in the archive.
           </p>
           <Link
             href="/applications/new"
@@ -146,8 +180,11 @@ export default async function ApplicationsPage() {
           </Link>
         </div>
       ) : (
-        <ApplicationsPipeline applications={applications} />
+        <ApplicationsPipeline applications={applications} staleIdleDays={staleIdleDays} />
       )}
+
+      <ApplicationsArchiveSection archived={archivedRows} />
+      <ApplicationsArchiveStats summary={archivedSummary} />
     </div>
   );
 }

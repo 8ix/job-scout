@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { PipelineApplication } from "./application-types";
 import type { PipelineBandKey } from "@/lib/applications/pipeline";
-import { STALE_APPLICATION_IDLE_DAYS } from "@/lib/constants/applications-ui";
 import { StageDropdown } from "./StageDropdown";
 
 function getDaysSinceApplied(appliedAt: string | null): number | null {
@@ -47,14 +46,15 @@ function scoreBadgeColor(score: number): string {
 interface ApplicationCardProps {
   app: PipelineApplication;
   band: PipelineBandKey;
+  staleIdleDays: number;
   onOpenDetails: () => void;
 }
 
-export function ApplicationCard({ app, band, onOpenDetails }: ApplicationCardProps) {
+export function ApplicationCard({ app, band, staleIdleDays, onOpenDetails }: ApplicationCardProps) {
   const router = useRouter();
   const now = new Date();
   const daysSinceApplied = getDaysSinceApplied(app.appliedAt);
-  const isStale = daysSinceApplied !== null && daysSinceApplied >= STALE_APPLICATION_IDLE_DAYS;
+  const isStale = daysSinceApplied !== null && daysSinceApplied >= staleIdleDays;
   const next = nextFutureEvent(app.scheduledEvents, now);
 
   return (

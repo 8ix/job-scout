@@ -157,4 +157,7 @@ Session **or** API key: `POST/PATCH/DELETE` on `/api/applications*` accept eithe
 - `GET /api/opportunities/:id/correspondence`, `POST /api/opportunities/:id/correspondence`, `DELETE /api/opportunities/:id/correspondence?id=…` — Log pasted email/message text on an application with a **received-at** time (session only; UI: **Applications** → application details)
 - `GET /api/rejections` (same data as the **Disqualified** page in the UI)
 - `GET /api/search-criteria`, `PATCH /api/search-criteria` — Read/update search criteria (UI: **Search criteria**); criteria are merged into the template used for `GET /api/prompts/active`
+- `GET /api/settings/application-workflow`, `PATCH /api/settings/application-workflow` — Application stale threshold in days (default **40**); UI: **Settings**
+- `POST /api/settings/reset-application-data` — Dangerous multi-scope wipe (requires session + dashboard password + exact confirmation phrase). See Settings page.
+- `GET` or `POST /api/cron/auto-archive-stale-applications` — Auto-archive stale applied opportunities (no upcoming events, idle ≥ configured days). Requires header `Authorization: Bearer <CRON_SECRET>`. Set `CRON_SECRET` in the environment and call from n8n, cron, or a host scheduler.
 - `GET /api/stats` — includes `totalRejections` (all rows), plus `workflowRejections` vs `blockedRejections` (ingest blocklist) for dashboards; `byScore` bands are scores **6–10** only (see **Score distribution** disclaimer). `GET /api/health`

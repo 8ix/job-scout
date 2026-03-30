@@ -31,6 +31,7 @@ describe("Sidebar", () => {
     expect(screen.getByTestId("nav-search-criteria")).toBeInTheDocument();
     expect(screen.getByTestId("nav-feeds")).toBeInTheDocument();
     expect(screen.getByTestId("nav-blocklist")).toBeInTheDocument();
+    expect(screen.getByTestId("nav-settings")).toBeInTheDocument();
   });
 
   it("renders the Job Scout title and brand image", () => {
@@ -60,11 +61,12 @@ describe("Sidebar", () => {
     expect(screen.getByTestId("nav-feeds-count")).toHaveTextContent("3");
   });
 
-  it("does not render count badges for dashboard, search criteria, and blocklist", () => {
+  it("does not render count badges for dashboard, search criteria, settings, and blocklist", () => {
     render(<Sidebar navCounts={defaultNavCounts} />);
 
     expect(screen.queryByTestId("nav-dashboard-count")).not.toBeInTheDocument();
     expect(screen.queryByTestId("nav-search-criteria-count")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("nav-settings-count")).not.toBeInTheDocument();
     expect(screen.queryByTestId("nav-blocklist-count")).not.toBeInTheDocument();
   });
 });

@@ -38,6 +38,8 @@ import { ConversionBySourceCard } from "@/components/dashboard/ConversionBySourc
 import { ApplyToFirstCallCard } from "@/components/dashboard/ApplyToFirstCallCard";
 import { ApplicationGoalsCard } from "@/components/dashboard/ApplicationGoalsCard";
 import { getApplicationGoalsDashboardData } from "@/lib/goals/application-goal-progress";
+import { getApplicationLifecycleMetrics } from "@/lib/stats/application-lifecycle";
+import { ApplicationLifecycleCard } from "@/components/dashboard/ApplicationLifecycleCard";
 
 export const dynamic = "force-dynamic";
 
@@ -242,6 +244,7 @@ export default async function DashboardPage() {
     applyToFirstCall,
     ingestBlocklistPatternBreakdown,
     applicationGoals,
+    applicationLifecycle,
   ] = await Promise.all([
     getStats(),
     getDailyFeedJobsData(),
@@ -263,6 +266,7 @@ export default async function DashboardPage() {
       windowDays: INGEST_BLOCKLIST_PATTERN_WINDOW_DAYS,
     }),
     getApplicationGoalsDashboardData(prisma),
+    getApplicationLifecycleMetrics(prisma),
   ]);
 
   const staleFeedSources = dailyFeedJobs.filter((f) => f.stale).map((f) => f.source);
@@ -294,8 +298,12 @@ export default async function DashboardPage() {
           windowDays={CONVERSION_COHORT_WINDOW_DAYS}
         />
       </div>
-      <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-4">
         <PipelineSnapshot totalActive={pipeline.totalActive} stages={pipeline.stages} />
+        <ApplicationLifecycleCard
+          totalEverApplied={applicationLifecycle.totalEverApplied}
+          totalClosedApplications={applicationLifecycle.totalClosedApplications}
+        />
         <OutcomeFunnel seven={funnel7} thirty={funnel30} />
         <ApplyToFirstCallCard stats={applyToFirstCall} />
       </div>
