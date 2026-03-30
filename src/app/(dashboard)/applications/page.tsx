@@ -6,10 +6,12 @@ import { ApplicationsArchiveSection } from "@/components/applications/Applicatio
 import { ApplicationsArchiveStats } from "@/components/applications/ApplicationsArchiveStats";
 import { getStaleIdleDays } from "@/lib/applications/workflowSettings";
 import { summarizeArchivedApplications } from "@/lib/applications/archived-stats";
+import { maybeAutoArchiveOnVisit } from "@/lib/applications/maybe-auto-archive-on-visit";
 
 export const dynamic = "force-dynamic";
 
 export default async function ApplicationsPage() {
+  await maybeAutoArchiveOnVisit();
   const [staleIdleDays, opportunities, archivedOpportunities] = await Promise.all([
     getStaleIdleDays(),
     prisma.opportunity.findMany({

@@ -176,9 +176,11 @@ model ApplicationGoalSettings {
 
 /** Singleton (id = "default"): stale threshold and future application workflow prefs. */
 model ApplicationWorkflowSettings {
-  id             String @id @default("default")
+  id             String    @id @default("default")
   /** Days since apply with no future scheduled event → stale UI + auto-archive target. */
-  staleIdleDays  Int    @default(40)
+  staleIdleDays  Int       @default(40)
+  /** Last time a throttled page-load auto-archive ran; optional cron also updates this. */
+  lastAutoArchiveAt DateTime?
 
   @@map("application_workflow_settings")
 }

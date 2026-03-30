@@ -159,5 +159,6 @@ Session **or** API key: `POST/PATCH/DELETE` on `/api/applications*` accept eithe
 - `GET /api/search-criteria`, `PATCH /api/search-criteria` — Read/update search criteria (UI: **Search criteria**); criteria are merged into the template used for `GET /api/prompts/active`
 - `GET /api/settings/application-workflow`, `PATCH /api/settings/application-workflow` — Application stale threshold in days (default **40**); UI: **Settings**
 - `POST /api/settings/reset-application-data` — Dangerous multi-scope wipe (requires session + dashboard password + exact confirmation phrase). See Settings page.
-- `GET` or `POST /api/cron/auto-archive-stale-applications` — Auto-archive stale applied opportunities (no upcoming events, idle ≥ configured days). Requires header `Authorization: Bearer <CRON_SECRET>`. Set `CRON_SECRET` in the environment and call from n8n, cron, or a host scheduler.
+- Stale applications are **auto-archived when you open Dashboard or Applications** (throttled to about once per hour per instance; see `AUTO_ARCHIVE_PAGE_LOAD_MIN_INTERVAL_MS`). No cron or env is required for that.
+- `GET` or `POST /api/cron/auto-archive-stale-applications` — **Optional**; same auto-archive job on your own schedule. Requires `Authorization: Bearer <CRON_SECRET>` when `CRON_SECRET` is set.
 - `GET /api/stats` — includes `totalRejections` (all rows), plus `workflowRejections` vs `blockedRejections` (ingest blocklist) for dashboards; `byScore` bands are scores **6–10** only (see **Score distribution** disclaimer). `GET /api/health`

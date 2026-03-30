@@ -78,7 +78,9 @@ export function SettingsPageClient({ initialStaleIdleDays }: SettingsPageClientP
         <h3 className="text-base font-semibold text-card-foreground">Application workflow</h3>
         <p className="text-sm text-muted-foreground">
           Applications with no future screening or interview scheduled are marked <strong>Stale</strong>{" "}
-          after this many days since apply. A scheduled job (or manual request) can auto-archive them.
+          after this many days since apply. Stale rows are auto-archived when you open the{" "}
+          <strong>Dashboard</strong> or <strong>Applications</strong> page (at most about once per hour). You can
+          also call the optional cron endpoint below if you prefer a fixed schedule.
         </p>
         <form onSubmit={saveWorkflow} className="space-y-3">
           <div>
@@ -109,10 +111,10 @@ export function SettingsPageClient({ initialStaleIdleDays }: SettingsPageClientP
           </button>
         </form>
         <p className="text-xs text-muted-foreground">
-          Auto-archive endpoint (call from n8n or a cron):{" "}
-          <code className="text-[11px]">/api/cron/auto-archive-stale-applications</code> with header{" "}
-          <code className="text-[11px]">Authorization: Bearer CRON_SECRET</code>. Set{" "}
-          <code className="text-[11px]">CRON_SECRET</code> in your environment.
+          Optional scheduled auto-archive:{" "}
+          <code className="text-[11px]">/api/cron/auto-archive-stale-applications</code> with{" "}
+          <code className="text-[11px]">Authorization: Bearer CRON_SECRET</code> (set{" "}
+          <code className="text-[11px]">CRON_SECRET</code> only if you use this).
         </p>
       </section>
 

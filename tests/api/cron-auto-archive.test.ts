@@ -19,10 +19,17 @@ describe("GET /api/cron/auto-archive-stale-applications", () => {
     prismaMock.applicationWorkflowSettings.findUnique.mockResolvedValue({
       id: "default",
       staleIdleDays: 40,
+      lastAutoArchiveAt: null,
     });
     prismaMock.applicationWorkflowSettings.create.mockResolvedValue({
       id: "default",
       staleIdleDays: 40,
+      lastAutoArchiveAt: null,
+    });
+    prismaMock.applicationWorkflowSettings.update.mockResolvedValue({
+      id: "default",
+      staleIdleDays: 40,
+      lastAutoArchiveAt: new Date(),
     });
 
     const { GET } = await import("@/app/api/cron/auto-archive-stale-applications/route");

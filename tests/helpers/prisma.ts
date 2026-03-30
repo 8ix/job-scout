@@ -70,6 +70,7 @@ export const prismaMock = {
     findUnique: vi.fn(),
     create: vi.fn(),
     upsert: vi.fn(),
+    update: vi.fn(),
   },
   $queryRaw: vi.fn(),
   $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(prismaMock)),

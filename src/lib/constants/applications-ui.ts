@@ -4,5 +4,8 @@
  */
 export const DEFAULT_STALE_IDLE_DAYS = 40;
 
+/** Minimum time between automatic (dashboard/applications) auto-archive runs. */
+export const AUTO_ARCHIVE_PAGE_LOAD_MIN_INTERVAL_MS = 60 * 60 * 1000;
+
 /** @deprecated Use DEFAULT_STALE_IDLE_DAYS or settings from DB. */
 export const STALE_APPLICATION_IDLE_DAYS = DEFAULT_STALE_IDLE_DAYS;

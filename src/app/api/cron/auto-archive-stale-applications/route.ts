@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getStaleIdleDays } from "@/lib/applications/workflowSettings";
 import { runAutoArchiveStaleApplications } from "@/lib/applications/auto-archive-stale";
 
+const WORKFLOW_SETTINGS_ID = "default";
+
 export const dynamic = "force-dynamic";
 
 function authorizeCron(request: Request): boolean {
@@ -14,6 +16,10 @@ function authorizeCron(request: Request): boolean {
 async function runArchive() {
   const staleIdleDays = await getStaleIdleDays();
   const { archived } = await runAutoArchiveStaleApplications(prisma, staleIdleDays);
+  await prisma.applicationWorkflowSettings.update({
+    where: { id: WORKFLOW_SETTINGS_ID },
+    data: { lastAutoArchiveAt: new Date() },
+  });
   return {
     archived,
     staleIdleDays,

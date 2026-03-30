@@ -40,6 +40,7 @@ import { ApplicationGoalsCard } from "@/components/dashboard/ApplicationGoalsCar
 import { getApplicationGoalsDashboardData } from "@/lib/goals/application-goal-progress";
 import { getApplicationLifecycleMetrics } from "@/lib/stats/application-lifecycle";
 import { ApplicationLifecycleCard } from "@/components/dashboard/ApplicationLifecycleCard";
+import { maybeAutoArchiveOnVisit } from "@/lib/applications/maybe-auto-archive-on-visit";
 
 export const dynamic = "force-dynamic";
 
@@ -230,6 +231,7 @@ async function getUpcomingScheduledEvents() {
 }
 
 export default async function DashboardPage() {
+  await maybeAutoArchiveOnVisit();
   const [
     stats,
     dailyFeedJobs,
