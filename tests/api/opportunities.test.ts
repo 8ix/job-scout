@@ -16,6 +16,7 @@ describe("POST /api/opportunities", () => {
     vi.clearAllMocks();
     prismaMock.feed.findUnique.mockResolvedValue({ id: "f1", name: "Adzuna", createdAt: new Date() });
     prismaMock.ingestBlockRule.findMany.mockResolvedValue([]);
+    prismaMock.opportunity.findMany.mockResolvedValue([]);
   });
 
   it("creates a new opportunity with valid input and API key", async () => {
@@ -186,6 +187,135 @@ describe("POST /api/opportunities", () => {
         ingestBlocklistRuleId: "rule-1",
       }),
     });
+  });
+
+  it("returns 422 when title+company matches a recent active application", async () => {
+    const input = buildOpportunityInput({
+      title: "Senior TypeScript Developer",
+      company: "Acme Corp",
+    });
+    prismaMock.opportunity.findUnique.mockResolvedValue(null);
+    prismaMock.opportunity.findMany.mockResolvedValue([
+      buildOpportunity({
+        id: "app-existing",
+        title: "Senior TypeScript Developer",
+        company: "Acme Corp",
+        status: "applied",
+        appliedAt: new Date(),
+      }),
+    ]);
+    prismaMock.rejection.findFirst.mockResolvedValue(null);
+    prismaMock.rejection.create.mockResolvedValue({
+      id: "rej-dup-1",
+      ...input,
+      redFlags: "Duplicate listing",
+      createdAt: new Date(),
+    });
+
+    const { POST } = await import("@/app/api/opportunities/route");
+    const response = await POST(
+      new Request("http://localhost/api/opportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": "test-key" },
+        body: JSON.stringify(input),
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(body.blocked).toBe(true);
+    expect(body.reason).toBe("recent_application_duplicate");
+    expect(body.matchedApplicationId).toBe("app-existing");
+    expect(body.rejectionId).toBe("rej-dup-1");
+    expect(prismaMock.opportunity.create).not.toHaveBeenCalled();
+  });
+
+  it("matches case-insensitively with extra whitespace", async () => {
+    const input = buildOpportunityInput({
+      title: "senior  typescript  developer",
+      company: "  acme corp  ",
+    });
+    prismaMock.opportunity.findUnique.mockResolvedValue(null);
+    prismaMock.opportunity.findMany.mockResolvedValue([
+      buildOpportunity({
+        id: "app-fuzzy",
+        title: "Senior TypeScript Developer",
+        company: "Acme Corp",
+        status: "applied",
+        appliedAt: new Date(),
+      }),
+    ]);
+    prismaMock.rejection.findFirst.mockResolvedValue(null);
+    prismaMock.rejection.create.mockResolvedValue({
+      id: "rej-fuzzy",
+      ...input,
+      redFlags: "Duplicate listing",
+      createdAt: new Date(),
+    });
+
+    const { POST } = await import("@/app/api/opportunities/route");
+    const response = await POST(
+      new Request("http://localhost/api/opportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": "test-key" },
+        body: JSON.stringify(input),
+      })
+    );
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).reason).toBe("recent_application_duplicate");
+  });
+
+  it("allows opportunity when matched application has status rejected", async () => {
+    const input = buildOpportunityInput({
+      title: "Senior TypeScript Developer",
+      company: "Acme Corp",
+    });
+    prismaMock.opportunity.findUnique.mockResolvedValue(null);
+    prismaMock.opportunity.findMany.mockResolvedValue([]);
+    const created = buildOpportunity({ ...input, id: "new-opp" });
+    prismaMock.opportunity.create.mockResolvedValue(created);
+
+    const { POST } = await import("@/app/api/opportunities/route");
+    const response = await POST(
+      new Request("http://localhost/api/opportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": "test-key" },
+        body: JSON.stringify(input),
+      })
+    );
+
+    expect(response.status).toBe(201);
+    expect(prismaMock.opportunity.create).toHaveBeenCalledOnce();
+  });
+
+  it("allows opportunity when no active application shares the same title+company", async () => {
+    const input = buildOpportunityInput({
+      title: "Senior TypeScript Developer",
+      company: "Acme Corp",
+    });
+    prismaMock.opportunity.findUnique.mockResolvedValue(null);
+    prismaMock.opportunity.findMany.mockResolvedValue([
+      buildOpportunity({
+        title: "Backend Engineer",
+        company: "Other Inc",
+        status: "applied",
+        appliedAt: new Date(),
+      }),
+    ]);
+    const created = buildOpportunity({ ...input, id: "new-opp-2" });
+    prismaMock.opportunity.create.mockResolvedValue(created);
+
+    const { POST } = await import("@/app/api/opportunities/route");
+    const response = await POST(
+      new Request("http://localhost/api/opportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Key": "test-key" },
+        body: JSON.stringify(input),
+      })
+    );
+
+    expect(response.status).toBe(201);
   });
 });
 

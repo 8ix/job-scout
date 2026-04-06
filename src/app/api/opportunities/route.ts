@@ -7,6 +7,11 @@ import { createOpportunitySchema } from "@/lib/validators/opportunity";
 import { isValidSource, getValidSources } from "@/lib/validators/source";
 import { findMatchingIngestBlockRule } from "@/lib/ingest-blocklist/match";
 import { persistIngestBlocklistRejection } from "@/lib/rejections/persist-ingest-blocklist-rejection";
+import { MANUAL_SOURCE } from "@/lib/constants/manual-source";
+import {
+  findRecentActiveApplicationRoleMatch,
+  persistRecentApplicationDuplicateRejection,
+} from "@/lib/opportunities/recent-application-dedup";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +75,26 @@ export async function POST(request: Request) {
       },
       { status: 422 }
     );
+  }
+
+  if (rest.source !== MANUAL_SOURCE) {
+    const matchedAppId = await findRecentActiveApplicationRoleMatch(
+      prisma,
+      rest.title,
+      rest.company
+    );
+    if (matchedAppId) {
+      const rejection = await persistRecentApplicationDuplicateRejection(prisma, rest);
+      return NextResponse.json(
+        {
+          blocked: true,
+          reason: "recent_application_duplicate",
+          matchedApplicationId: matchedAppId,
+          rejectionId: rejection.id,
+        },
+        { status: 422 }
+      );
+    }
   }
 
   const opportunity = await prisma.opportunity.create({
