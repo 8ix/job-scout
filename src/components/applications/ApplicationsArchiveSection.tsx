@@ -40,7 +40,7 @@ export function ApplicationsArchiveSection({ archived }: { archived: ArchivedApp
       </button>
       {open ? (
         <div className="border-t border-border overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[540px] text-left text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground">
                 <th className="px-3 py-2 font-medium">Company</th>

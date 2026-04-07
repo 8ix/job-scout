@@ -22,22 +22,22 @@ export function Pagination({ total, page, limit }: PaginationProps) {
   }
 
   return (
-    <div className="flex items-center justify-between pt-4">
-      <p className="text-sm text-muted-foreground">
-        Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
+    <div className="flex flex-wrap items-center justify-between gap-2 pt-4">
+      <p className="text-xs sm:text-sm text-muted-foreground">
+        {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
       </p>
       <div className="flex gap-2">
         <button
           disabled={page <= 1}
           onClick={() => goTo(page - 1)}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-muted transition-colors"
+          className="rounded-lg border border-border px-3 py-1.5 text-xs sm:text-sm disabled:opacity-50 hover:bg-muted transition-colors"
         >
           Previous
         </button>
         <button
           disabled={page >= totalPages}
           onClick={() => goTo(page + 1)}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-muted transition-colors"
+          className="rounded-lg border border-border px-3 py-1.5 text-xs sm:text-sm disabled:opacity-50 hover:bg-muted transition-colors"
         >
           Next
         </button>

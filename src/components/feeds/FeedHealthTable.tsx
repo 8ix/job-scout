@@ -25,7 +25,8 @@ export function FeedHealthTable({ rows }: FeedHealthTableProps) {
         Health is inferred from the latest <strong>opportunity</strong> or <strong>disqualified</strong>{" "}
         API ingest per feed. If nothing arrived in <strong>24 hours</strong>, the feed is flagged.
       </p>
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[540px] text-sm">
         <thead>
           <tr className="border-b border-border bg-muted">
             <th className="px-4 py-3 text-left font-medium text-muted-foreground">Feed</th>
@@ -66,6 +67,7 @@ export function FeedHealthTable({ rows }: FeedHealthTableProps) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

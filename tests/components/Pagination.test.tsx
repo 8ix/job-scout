@@ -23,7 +23,7 @@ describe("Pagination", () => {
   it("renders showing text and navigation buttons", () => {
     render(<Pagination total={50} page={2} limit={20} />);
 
-    expect(screen.getByText(/Showing 21–40 of 50/)).toBeInTheDocument();
+    expect(screen.getByText(/21–40 of 50/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /previous/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
   });
