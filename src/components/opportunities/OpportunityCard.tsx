@@ -36,7 +36,7 @@ export function OpportunityCard({ opportunity, onStatusChange }: OpportunityCard
   const opp = opportunity;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+    <div className="rounded-xl border border-border bg-card p-5 space-y-3 overflow-hidden">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1 min-w-0">
           <h3 className="text-base font-semibold text-card-foreground truncate">{opp.title}</h3>

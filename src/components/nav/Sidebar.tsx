@@ -126,7 +126,7 @@ export function Sidebar({ navCounts }: SidebarProps) {
     <>
       {/* ── Mobile top bar (below md) ── */}
       <header
-        className="sticky top-0 z-40 flex md:hidden items-center justify-between border-b border-border bg-card px-4 py-2"
+        className="z-40 flex shrink-0 md:hidden items-center justify-between border-b border-border bg-card px-4 py-2"
         data-testid="mobile-header"
       >
         <button

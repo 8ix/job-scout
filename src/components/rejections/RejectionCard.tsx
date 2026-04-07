@@ -27,7 +27,7 @@ export function RejectionCard({ rejection }: RejectionCardProps) {
 
   return (
     <div
-      className={`rounded-xl border p-5 space-y-3 ${
+      className={`rounded-xl border p-5 space-y-3 overflow-hidden ${
         blocklist
           ? "border-amber-500/70 bg-amber-50/80 dark:border-amber-600/60 dark:bg-amber-950/25"
           : "border-border bg-card"
@@ -36,8 +36,8 @@ export function RejectionCard({ rejection }: RejectionCardProps) {
     >
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-semibold text-card-foreground truncate">
+          <div className="flex flex-wrap items-center gap-2 overflow-hidden">
+            <h3 className="text-base font-semibold text-card-foreground truncate max-w-full">
               {rejection.title}
             </h3>
             {blocklist && (

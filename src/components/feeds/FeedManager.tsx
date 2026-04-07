@@ -77,14 +77,14 @@ export function FeedManager({ feeds }: FeedManagerProps) {
         <div className="space-y-2">
           {feeds.map((feed) => (
             <div key={feed.id} className="rounded-xl border border-border bg-card">
-              <div className="flex items-center justify-between px-4 py-3">
-                <div>
-                  <span className="font-medium text-card-foreground">{feed.name}</span>
-                  <span className="ml-3 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                <div className="min-w-0">
+                  <span className="font-medium text-card-foreground truncate block">{feed.name}</span>
+                  <span className="text-xs text-muted-foreground">
                     Added {new Date(feed.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                   <button
                     onClick={() => setExpandedId(expandedId === feed.id ? null : feed.id)}
                     className="rounded-lg border border-border px-3 py-1 text-xs text-muted-foreground hover:text-card-foreground"

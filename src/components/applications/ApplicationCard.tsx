@@ -59,7 +59,7 @@ export function ApplicationCard({ app, band, staleIdleDays, onOpenDetails }: App
 
   return (
     <article
-      className={`rounded-xl border border-border bg-card border-l-4 pl-4 pr-4 py-4 shadow-sm ${bandBorder[band]}`}
+      className={`rounded-xl border border-border bg-card border-l-4 pl-4 pr-4 py-4 shadow-sm overflow-hidden ${bandBorder[band]}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
