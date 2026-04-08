@@ -2,6 +2,10 @@
   "name": "job-scout",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "hono": "4.12.12",
+    "@hono/node-server": "1.19.13"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
