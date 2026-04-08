@@ -1,11 +1,13 @@
-FROM node:22-alpine AS deps
+# Alpine 3.23 base includes zlib patched for CVE-2026-27171; apk line catches mirror lag.
+FROM node:22-alpine3.23 AS deps
 WORKDIR /app
+RUN apk update && apk upgrade --no-cache zlib
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:22-alpine AS build
+FROM node:22-alpine3.23 AS build
 WORKDIR /app
-RUN apk upgrade --no-cache zlib
+RUN apk update && apk upgrade --no-cache zlib
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
