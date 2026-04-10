@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ManualApplicationForm } from "@/components/applications/ManualApplicationForm";
 import { closedReasonLabel } from "@/lib/applications/application-closed-reason";
+import { RestoreApplicationButton } from "@/components/applications/RestoreApplicationButton";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -51,6 +52,7 @@ export default async function EditApplicationPage({ params }: PageProps) {
             </a>
           ) : null}
         </div>
+        <RestoreApplicationButton opportunityId={opp.id} />
       </div>
     );
   }

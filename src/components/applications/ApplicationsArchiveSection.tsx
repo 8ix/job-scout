@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { closedReasonLabel } from "@/lib/applications/application-closed-reason";
 
 export type ArchivedApplicationRow = {
@@ -14,7 +15,23 @@ export type ArchivedApplicationRow = {
 };
 
 export function ApplicationsArchiveSection({ archived }: { archived: ArchivedApplicationRow[] }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+
+  async function handleRestore(id: string) {
+    setRestoringId(id);
+    try {
+      const res = await fetch(`/api/opportunities/${id}/unarchive`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        router.refresh();
+      }
+    } finally {
+      setRestoringId(null);
+    }
+  }
 
   if (archived.length === 0) {
     return (
@@ -74,12 +91,23 @@ export function ApplicationsArchiveSection({ archived }: { archived: ArchivedApp
                     {closedReasonLabel(row.applicationClosedReason)}
                   </td>
                   <td className="px-3 py-2">
-                    <Link
-                      href={`/applications/${row.id}/edit`}
-                      className="text-xs font-medium text-primary hover:underline"
-                    >
-                      View
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={restoringId === row.id}
+                        onClick={() => handleRestore(row.id)}
+                        data-testid={`restore-${row.id}`}
+                        className="text-xs font-medium text-success hover:underline disabled:opacity-50"
+                      >
+                        {restoringId === row.id ? "Restoring\u2026" : "Restore"}
+                      </button>
+                      <Link
+                        href={`/applications/${row.id}/edit`}
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        View
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
